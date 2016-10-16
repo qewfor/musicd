@@ -322,41 +322,43 @@ public class FutureBot
                     }
                 });
 
-        executorService.scheduleAtFixedRate(() ->
+        executorService.scheduleAtFixedRate(() -> this.syncDataBase(hook), 0, 10, TimeUnit.MINUTES);
+    }
+
+    private void syncDataBase(GuildHook hook)
+    {
+        try
         {
-            try
+            if (!dataBase.isAvailable() && !(dataBase = connectDatabase()).isAvailable())
+                return;
+        }
+        catch (JSONException e)
+        {
+            return;
+        }
+        try (ResultSet resultSet = dataBase.readFromTable("Command", "alias, reply, type"))
+        {
+            if (resultSet == null)
             {
-                if (!dataBase.isAvailable() && !(dataBase = connectDatabase()).isAvailable())
-                    return;
-            }
-            catch (JSONException e)
-            {
+                log("Unable to retrieve commands from database.", LoggerFlag.WARNING);
                 return;
             }
-            try (ResultSet resultSet = dataBase.readFromTable("Command", "alias, reply, type"))
+            while (resultSet.next())
             {
-                if (resultSet == null)
-                {
-                    log("Unable to retrieve commands from database.", LoggerFlag.WARNING);
-                    return;
-                }
-                while (resultSet.next())
-                {
-                    if (resultSet.getInt("type") == 2)
-                        continue;
-                    String alias = resultSet.getString("alias");
-                    String reply = resultSet.getString("reply");
-                    if (resultSet.getInt("type") == -1)
-                        hook.removeCommandIf(c -> c.getAlias().equalsIgnoreCase(alias));
-                    else if (hook.find(alias) == null)
-                        hook.registerCommand(new Command(alias, reply));
-                }
+                if (resultSet.getInt("type") == 2)
+                    continue;
+                String alias = resultSet.getString("alias");
+                String reply = resultSet.getString("reply");
+                if (resultSet.getInt("type") == -1)
+                    hook.removeCommandIf(c -> c.getAlias().equalsIgnoreCase(alias));
+                else if (hook.find(alias) == null)
+                    hook.registerCommand(new Command(alias, reply));
             }
-            catch (Exception e)
-            {
-                log(e.toString(), LoggerFlag.ERROR);
-            }
-        }, 0, 10, TimeUnit.MINUTES);
+        }
+        catch (Exception e)
+        {
+            log(e.toString(), LoggerFlag.ERROR);
+        }
     }
 
     /* Static Methods */
