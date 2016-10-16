@@ -16,34 +16,48 @@
 
 package com.futuremangaming.futurebot;
 
+import com.futuremangaming.futurebot.commands.Command;
 import com.futuremangaming.futurebot.data.DataBase;
 import com.futuremangaming.futurebot.hooks.GuildHook;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
 import net.dv8tion.jda.core.entities.Member;
+import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.events.ReadyEvent;
+import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import net.dv8tion.jda.core.hooks.EventListener;
+import net.dv8tion.jda.core.requests.RestAction;
 import net.dv8tion.jda.core.utils.SimpleLog;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.io.IOException;
+import java.sql.ResultSet;
 import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class FutureBot
 {
 
+    private static ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+
     private JDA jda;
     private DataBase dataBase = null;
     private JSONObject config;
+    private String modRole = "-1";
     private Set<String> admins = new HashSet<>();
 
     public FutureBot() throws Exception
@@ -56,6 +70,8 @@ public class FutureBot
         JSONArray array = config.getJSONArray("administrators");
         for (int i = 0; i < array.length(); i++)
             admins.add(array.getString(i));
+        if (!config.isNull("moderators"))
+            modRole = config.getString("moderators");
     }
 
     /* Getters & Setters */
@@ -85,13 +101,21 @@ public class FutureBot
                 .setAudioEnabled(false)
                 .setBulkDeleteSplittingEnabled(false)
                 .setEnableShutdownHook(true)
-                .addListener((EventListener) event -> {
+                .addListener((EventListener) event ->
+                {
                     if (event instanceof ReadyEvent)
                     {
                         jda = event.getJDA();
                         if (!config.isNull("guild_id"))
-                            jda.addEventListener(new GuildHook(config.getString("guild_id"), this));
-                        else log("'guild_id' was not populated!", LoggerFlag.WARNING);
+                        {
+                            GuildHook hook = new GuildHook(config.getString("guild_id"), this);
+                            initHardCommands(hook);
+                            jda.addEventListener(hook);
+                        }
+                        else
+                        {
+                            log("'guild_id' was not populated!", LoggerFlag.WARNING);
+                        }
                         log("Successfully connected to Discord!", LoggerFlag.SUCCESS);
                     }
                 });
@@ -112,7 +136,7 @@ public class FutureBot
         {
             log(e.toString(), LoggerFlag.ERROR, LoggerFlag.FATAL);
         }
-        log("Cleared all connections!" , LoggerFlag.SUCCESS);
+        log("Cleared all connections!", LoggerFlag.SUCCESS);
     }
 
     /* Private Methods */
@@ -143,7 +167,7 @@ public class FutureBot
         return null;
     }
 
-    private DataBase connectDatabase() throws Exception
+    private DataBase connectDatabase() throws JSONException
     {
         JSONObject database = config.getJSONObject("database");
         log("Establishing connection to database...", LoggerFlag.INFO);
@@ -182,15 +206,168 @@ public class FutureBot
         }
     }
 
+    private void initHardCommands(GuildHook hook)
+    {
+        hook.registerCommand(
+                new Command("ping")
+                {
+                    @Override
+                    public String getReply(String args, GuildMessageReceivedEvent event, FutureBot bot)
+                    {
+                        long time = System.currentTimeMillis();
+                        RestAction<Message> action = GuildHook.sendMessage("Pong!", event.getChannel());
+                        if (action != null)
+                            action.queue(m -> m.editMessage("**Ping**: " + (System.currentTimeMillis() - time) +
+                                    "ms").queue());
+                        return null;
+                    }
+                },
+                new Command("eval")
+                {
+                    @Override
+                    public String getReply(String args, GuildMessageReceivedEvent event, FutureBot bot)
+                    {
+                        Member member = event.getMember();
+                        if (!bot.isAdmin(member))
+                            return null;
+                        ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
+                        engine.put("api", event.getJDA());
+                        engine.put("channel", event.getChannel());
+                        engine.put("guild", event.getGuild());
+                        engine.put("event", event);
+                        engine.put("bot", bot);
+                        engine.put("message", event.getMessage());
+                        engine.put("me", member);
+                        Object o;
+                        try
+                        {
+                            o = engine.eval(args);
+                        }
+                        catch (ScriptException e)
+                        {
+                            o = e.getMessage();
+                        }
+                        catch (Exception e)
+                        {
+                            o = e;
+                        }
+                        return o == null ? "null" : o.toString();
+                    }
+                },
+                new Command("shutdown")
+                {
+                    @Override
+                    public String getReply(String args, GuildMessageReceivedEvent event, FutureBot bot)
+                    {
+                        if (bot.isAdmin(event.getMember()))
+                            GuildHook.sendMessage("Shutting down...", event.getChannel()).queue(m -> bot.shutdown(true));
+                        return null;
+                    }
+                },
+                new Command("add")
+                {
+                    @Override
+                    public String getReply(String args, GuildMessageReceivedEvent event, FutureBot bot)
+                    {
+                        if (!event.getMember().getRoles().parallelStream().anyMatch(r -> r.getId().equals(modRole)))
+                            return null;
+                        String[] parts = args.split("\\s+", 2);
+                        if (parts.length < 2)
+                            return "**Usage**: `" + Command.PREFIX + getAlias() + " <trigger> <reply>`\n\n**Info**: " +
+                                    "Commands added with this route are case-insensitive!";
+                        String alias = parts[0];
+                        String reply = parts[1];
+                        hook.registerCommand(new Command(alias, reply));
+                        if (dataBase.isAvailable())
+                        {
+                            if (dataBase.insertInto("Command(alias, reply, type)", alias.toLowerCase(), reply, 0))
+                            {
+                                return "Successfully created new Command!";
+                            }
+                        }
+                        return "Created command **only** for current session, due to the database being unreachable.";
+                    }
+                },
+                new Command("remove")
+                {
+                    @Override
+                    public String getReply(String args, GuildMessageReceivedEvent event, FutureBot bot)
+                    {
+                        if (!event.getMember().getRoles().parallelStream().anyMatch(r -> r.getId().equals(modRole)))
+                            return null;
+                        String[] parts = args.split("\\s+", 2);
+                        if (parts.length < 1)
+                            return "**Usage**: `" + Command.PREFIX + getAlias() + " <command>`\n\n**Info**: " +
+                                    "Commands removed with this may not remove them from the twitch chat!";
+                        String alias = parts[0];
+                        if (!hook.removeCommandIf(c -> c.getAlias().equalsIgnoreCase(alias)))
+                            return "Command `" + alias + "` not found!";
+                        if (dataBase.isAvailable())
+                        {
+                            if (dataBase.removeFrom("Command", "alias = '" + alias.toLowerCase() + "'"))
+                                return "Deleted `" + alias + "`!";
+                        }
+                        return "Removed command **only** for current session, due to the database being unreachable.";
+                    }
+                },
+                new Command("status")
+                {
+                    @Override
+                    public String getReply(String args, GuildMessageReceivedEvent event, FutureBot bot)
+                    {
+                        return "**Status**\n\n"
+                                + "**Database**: " + (dataBase.isAvailable() ? "Connected" : "Disconnected")
+                                + "\n**Creator**: Minn#6688"
+                                + "\n**Source**: <https://github.com/FuturemanGaming/FutureBot-Discord>";
+                    }
+                });
+
+        executorService.scheduleAtFixedRate(() ->
+        {
+            try
+            {
+                if (!dataBase.isAvailable() && !(dataBase = connectDatabase()).isAvailable())
+                    return;
+            }
+            catch (JSONException e)
+            {
+                return;
+            }
+            try (ResultSet resultSet = dataBase.readFromTable("Command", "alias, reply, type"))
+            {
+                if (resultSet == null)
+                {
+                    log("Unable to retrieve commands from database.", LoggerFlag.WARNING);
+                    return;
+                }
+                while (resultSet.next())
+                {
+                    if (resultSet.getInt("type") == 2)
+                        continue;
+                    String alias = resultSet.getString("alias");
+                    String reply = resultSet.getString("reply");
+                    if (resultSet.getInt("type") == -1)
+                        hook.removeCommandIf(c -> c.getAlias().equalsIgnoreCase(alias));
+                    else if (hook.find(alias) == null)
+                        hook.registerCommand(new Command(alias, reply));
+                }
+            }
+            catch (Exception e)
+            {
+                log(e.toString(), LoggerFlag.ERROR);
+            }
+        }, 0, 10, TimeUnit.MINUTES);
+    }
+
     /* Static Methods */
 
     /**
      * Used for logging.
      *
      * @param message
-     *      The Message to log
+     *         The Message to log
      * @param flags
-     *      The varargs {@link LoggerFlag Flags}
+     *         The varargs {@link LoggerFlag Flags}
      */
     public static void log(String message, LoggerFlag... flags)
     {
@@ -221,6 +398,11 @@ public class FutureBot
         {
             log(String.format("One of the configuration files was not populated correctly. Please delete it and run " +
                     "the script again. (%s)", e.getMessage()), LoggerFlag.FATAL, LoggerFlag.ERROR);
+            System.exit(-1);
+        }
+        catch (IOException e)
+        {
+            log(e.getMessage(), LoggerFlag.ERROR, LoggerFlag.FATAL);
             System.exit(-1);
         }
     }

@@ -17,15 +17,24 @@
 package com.futuremangaming.futurebot.hooks;
 
 import com.futuremangaming.futurebot.FutureBot;
-import net.dv8tion.jda.core.entities.Member;
+import com.futuremangaming.futurebot.commands.Command;
+import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.events.Event;
 import net.dv8tion.jda.core.events.message.guild.GenericGuildMessageEvent;
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.EventListener;
+import net.dv8tion.jda.core.requests.RestAction;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Predicate;
 
 public class GuildHook implements EventListener
 {
+
+    private List<Command> commands = new ArrayList<>();
 
     private String guildId;
     private FutureBot bot;
@@ -34,6 +43,24 @@ public class GuildHook implements EventListener
     {
         this.guildId = guildId;
         this.bot = bot;
+    }
+
+    public void registerCommand(Command... commands)
+    {
+        Collections.addAll(this.commands, commands);
+    }
+
+    public Command find(String alias)
+    {
+        for (Command c : commands)
+            if (c.getAlias().equalsIgnoreCase(alias))
+                return c;
+        return null;
+    }
+
+    public boolean removeCommandIf(Predicate<Command> predicate)
+    {
+        return commands.removeIf(predicate);
     }
 
     @Override
@@ -57,26 +84,38 @@ public class GuildHook implements EventListener
         String args = "";
         if (content.length > 1)
             args = content[1];
-        commandExecution(cmd, args, event.getChannel(), event.getMember());
+        Command triggerd = commandExecution(cmd, args, event);
+        /*if (triggerd != null)
+            FutureBot.log("Command " + triggerd.getAlias() + " was triggered", LoggerFlag.INFO);*/
     }
 
-    private void commandExecution(String cmd, String args, TextChannel channel, Member member)
+    public static RestAction<Message> sendMessage(String content, TextChannel channel)
     {
-        // will be replaced later
-        switch (cmd.toLowerCase())
+        if (content == null || content.isEmpty())
+            return null;
+        try
         {
-            case "!ping":
-                long time = System.currentTimeMillis();
-                channel.sendMessage("Pong!").queue(m -> m.editMessage("**Ping**: " + (System.currentTimeMillis() - time)  + "ms").queue());
-                break;
-            case "!info":
-                channel.sendMessage("Alpha build of FutureBot!").queue();
-                break;
-            case "!shutdown":
-                if (bot.isAdmin(member))
-                    channel.sendMessage("Shutting down!").queue(m -> bot.shutdown(true));
-                break;
+            return channel.sendMessage(content);
+        } catch (Exception ignored)
+        {
+            return null;
         }
     }
 
+    private Command commandExecution(String cmd, String args, GuildMessageReceivedEvent event)
+    {
+        // will be replaced later
+        TextChannel channel = event.getChannel();
+        for (Command c : commands)
+        {
+            if (c.isCommand(cmd))
+            {
+                RestAction<Message> action = sendMessage(c.getReply(args, event, bot), channel);
+                if (action != null)
+                    action.queue();
+                return c;
+            }
+        }
+        return null;
+    }
 }

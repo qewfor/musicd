@@ -72,11 +72,24 @@ public class DataBase implements AutoCloseable
         return retrieveQuery("SELECT " + String.join(", ", (CharSequence[]) fields) + " FROM " + table + ";");
     }
 
-    public void insertInto(String tableExp, String... values)
+    public boolean insertInto(String tableExp, Object... values)
     {
         if (values.length == 0 || tableExp == null || tableExp.isEmpty())
-            return;
-        executeQuery("INSERT INTO " + tableExp + " VALUES(" + String.join(", ", (CharSequence[]) values) + ");");
+            return false;
+        CharSequence[] values0 = new CharSequence[values.length];
+        for (int i = 0; i < values.length; i++)
+        {
+            if (values[i] instanceof String)
+                values0[i] = "'" + sanitize((String) values[i]) + "'";
+            else values0[i] = sanitize(values[i].toString());
+        }
+        return executeQuery("INSERT INTO " + sanitize(tableExp) + " VALUES(" + String.join(", ", values0));
+    }
+
+    public boolean removeFrom(String table, String where)
+    {
+        return !(table == null || where == null || table.isEmpty()) && executeQuery("DELETE FROM " + sanitize(table) + (where
+                .isEmpty() ? "" : "WHERE " + sanitize(where)));
     }
 
     public boolean executeQuery(String query)
@@ -103,6 +116,11 @@ public class DataBase implements AutoCloseable
     {
         if (!isAvailable())
             throw new IllegalStateException("Database connection not established.");
+    }
+
+    public static String sanitize(String s)
+    {
+        return s.replaceAll("['\";`]", "\\$0");
     }
 
     @Override

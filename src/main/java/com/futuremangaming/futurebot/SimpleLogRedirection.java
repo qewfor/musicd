@@ -25,10 +25,7 @@ public class SimpleLogRedirection implements SimpleLog.LogListener
     {
         if (message == null) return;
         if (message instanceof Throwable)
-        {
-            onError(log, (Throwable) message);
             return;
-        }
         LoggerFlag flag;
         switch (logLevel)
         {
