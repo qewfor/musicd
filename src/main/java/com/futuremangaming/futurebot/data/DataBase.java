@@ -17,6 +17,9 @@
 package com.futuremangaming.futurebot.data;
 
 import java.sql.*;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executors;
 
 public class DataBase implements AutoCloseable
 {
@@ -35,8 +38,9 @@ public class DataBase implements AutoCloseable
         try
         {
             Class.forName("com.mysql.jdbc.Driver");
-            connection = DriverManager.getConnection(String.format("jdbc:mysql://%s:%d/%s?username=%s&password=%s",
+            connection = DriverManager.getConnection(String.format("jdbc:mysql://%s:%d/%s?user=%s&password=%s&useSSL=false",
                     ip, port, database, username, password));
+            connection.setNetworkTimeout(Executors.newCachedThreadPool(), 5000);
         }
         catch (SQLException e)
         {
@@ -65,7 +69,7 @@ public class DataBase implements AutoCloseable
         return executeQuery("DROP TABLE IF EXISTS " + table + ";");
     }
 
-    public ResultSet readFromTable(String table, String... fields)
+    public Queue<String[]> readFromTable(String table, String... fields)
     {
         if (fields.length == 0 || table == null || table.isEmpty())
             return null;
@@ -83,33 +87,66 @@ public class DataBase implements AutoCloseable
                 values0[i] = "'" + sanitize((String) values[i]) + "'";
             else values0[i] = sanitize(values[i].toString());
         }
-        return executeQuery("INSERT INTO " + sanitize(tableExp) + " VALUES(" + String.join(", ", values0));
+        return executeQuery("INSERT INTO " + tableExp + " VALUES(" + String.join(", ", values0) + ");");
     }
 
     public boolean removeFrom(String table, String where)
     {
-        return !(table == null || where == null || table.isEmpty()) && executeQuery("DELETE FROM " + sanitize(table) + (where
-                .isEmpty() ? "" : "WHERE " + sanitize(where)));
+        return !(table == null || where == null || table.isEmpty()) && executeQuery("DELETE FROM " + table + (where
+                .isEmpty() ? "" : " WHERE " + where) + ";");
     }
 
     public boolean executeQuery(String query)
     {
-        return retrieveQuery(query) != null;
-    }
-
-    public ResultSet retrieveQuery(String query)
-    {
         checkAvailable();
-        ResultSet set = null;
         try (Statement stmt = connection.createStatement())
         {
-            set = stmt.executeQuery(query);
+            return !stmt.execute(query);
+        }
+        catch (SQLTimeoutException e)
+        {
+            try
+            {
+                close();
+            } catch (Exception ignored) {}
+            available = false;
         }
         catch (SQLException e)
         {
             e.printStackTrace();
         }
-        return set;
+        return false;
+    }
+
+    public Queue<String[]> retrieveQuery(String query)
+    {
+        checkAvailable();
+        try (Statement stmt = connection.createStatement())
+        {
+            ResultSet set = stmt.executeQuery(query);
+            Queue<String[]> rows = new ConcurrentLinkedQueue<>();
+            while (!set.isClosed() && set.next())
+            {
+                String[] columns = new String[set.getMetaData().getColumnCount()];
+                for (int i = 0; i < columns.length; i++)
+                    columns[i] = set.getString(i+1);
+                rows.add(columns);
+            }
+            return rows;
+        }
+        catch (SQLTimeoutException e)
+        {
+            try
+            {
+                close();
+            } catch (Exception ignored) {}
+            available = false;
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     private void checkAvailable()
@@ -120,7 +157,7 @@ public class DataBase implements AutoCloseable
 
     public static String sanitize(String s)
     {
-        return s.replaceAll("['\";`]", "\\$0");
+        return s.replaceAll("(['\"`])", "\\$1");
     }
 
     @Override

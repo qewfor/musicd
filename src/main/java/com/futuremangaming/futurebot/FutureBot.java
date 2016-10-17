@@ -25,6 +25,7 @@ import com.futuremangaming.futurebot.commands.regular.PingCommand;
 import com.futuremangaming.futurebot.commands.regular.StatusCommand;
 import com.futuremangaming.futurebot.data.DataBase;
 import com.futuremangaming.futurebot.hooks.GuildHook;
+import com.futuremangaming.futurebot.hooks.InviteProtection;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
@@ -41,9 +42,9 @@ import org.json.JSONObject;
 import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.io.IOException;
-import java.sql.ResultSet;
 import java.time.LocalTime;
 import java.util.HashSet;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -58,6 +59,7 @@ public class FutureBot
     private DataBase dataBase = null;
     private JSONObject config;
     private String modRole = "-1";
+    private String subRole = "-1";
     private Set<String> admins = new HashSet<>();
 
     public FutureBot() throws Exception
@@ -72,6 +74,8 @@ public class FutureBot
             admins.add(array.getString(i));
         if (!config.isNull("moderators"))
             modRole = config.getString("moderators");
+        if (!config.isNull("subscribers"))
+            subRole = config.getString("subscribers");
     }
 
     /* Getters & Setters */
@@ -96,6 +100,16 @@ public class FutureBot
         return admins.contains(member.getUser().getId());
     }
 
+    public boolean isMod(Member member)
+    {
+        return member.getRoles().parallelStream().anyMatch(r -> r.getId().equals(modRole));
+    }
+
+    public boolean isSub(Member member)
+    {
+        return member.getRoles().parallelStream().anyMatch(r -> r.getId().equals(subRole));
+    }
+
     /* Connection Management */
 
     public void connectDiscord(boolean block) throws LoginException, InterruptedException, RateLimitedException
@@ -116,6 +130,7 @@ public class FutureBot
                             GuildHook hook = new GuildHook(config.getString("guild_id"), this);
                             initHardCommands(hook);
                             jda.addEventListener(hook);
+                            jda.addEventListener(new InviteProtection(config.getString("guild_id"), this));
                         }
                         else
                         {
@@ -203,6 +218,8 @@ public class FutureBot
                     .put("guild_id", "id of server to operate on")
                     .put("authorization", "bot token here")
                     .put("administrators", new JSONArray().put("administrator ids here"))
+                    .put("moderators", "id of mod role here")
+                    .put("subscribers", "id of sub role here")
                     .put("database", new JSONObject().put("ip", "").put("database", "").put("username", "").put
                             ("password", "").put("port", 3302));
             generateFile("config.json", config);
@@ -239,28 +256,24 @@ public class FutureBot
         {
             return;
         }
-        try (ResultSet resultSet = dataBase.readFromTable("Command", "alias, reply, type"))
+        Queue<String[]> resultSet = dataBase.readFromTable("Command", "alias, reply, type");
+        if (resultSet == null)
         {
-            if (resultSet == null)
-            {
-                log("Unable to retrieve commands from database.", LoggerFlag.WARNING);
-                return;
-            }
-            while (resultSet.next())
-            {
-                if (resultSet.getInt("type") == 2)
-                    continue;
-                String alias = resultSet.getString("alias");
-                String reply = resultSet.getString("reply");
-                if (resultSet.getInt("type") == -1)
-                    hook.removeCommandIf(c -> c.getAlias().equalsIgnoreCase(alias));
-                else if (hook.find(alias) == null)
-                    hook.registerCommand(new Command(alias, reply));
-            }
+            log("Unable to retrieve commands from database.", LoggerFlag.WARNING);
+            return;
         }
-        catch (Exception e)
+
+        for (String[] arr : resultSet)
         {
-            log(e.toString(), LoggerFlag.ERROR);
+            if (arr[2].equals("2"))
+                continue;
+            String alias = arr[0];
+            String reply = arr[1];
+            if (arr[2].equals("-1"))
+                hook.removeCommandIf(c -> c.getAlias().equalsIgnoreCase(alias));
+            else if (hook.find(alias) == null)
+                hook.registerCommand(new Command(alias, reply));
+            dataBase.removeFrom("Command", "type < 0");
         }
     }
 

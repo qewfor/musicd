@@ -35,7 +35,7 @@ public class AddCommand extends Command
     @Override
     public String getReply(String args, GuildMessageReceivedEvent event, FutureBot bot)
     {
-        if (!event.getMember().getRoles().parallelStream().anyMatch(r -> r.getId().equals(bot.getModRole())))
+        if (!bot.isAdmin(event.getMember()) && !bot.isMod(event.getMember()))
             return null;
         String[] parts = args.split("\\s+", 2);
         if (parts.length < 2)

@@ -18,6 +18,7 @@ package com.futuremangaming.futurebot.commands.moderator;
 
 import com.futuremangaming.futurebot.FutureBot;
 import com.futuremangaming.futurebot.commands.Command;
+import com.futuremangaming.futurebot.data.DataBase;
 import com.futuremangaming.futurebot.hooks.GuildHook;
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
 
@@ -46,7 +47,7 @@ public class RemoveCommand extends Command
             return "Command `" + alias + "` not found!";
         if (bot.getDataBase().isAvailable())
         {
-            if (bot.getDataBase().removeFrom("Command", "alias = '" + alias.toLowerCase() + "'"))
+            if (bot.getDataBase().removeFrom("Command", "alias = \"" + DataBase.sanitize(alias.toLowerCase()) + "\""))
                 return "Deleted `" + alias + "`!";
         }
         return "Removed command **only** for current session, due to the database being unreachable.";
