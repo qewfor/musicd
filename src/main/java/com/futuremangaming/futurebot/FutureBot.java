@@ -21,6 +21,7 @@ import com.futuremangaming.futurebot.commands.ListCommand;
 import com.futuremangaming.futurebot.commands.admin.EvalCommand;
 import com.futuremangaming.futurebot.commands.admin.ShutdownCommand;
 import com.futuremangaming.futurebot.commands.moderator.AddCommand;
+import com.futuremangaming.futurebot.commands.moderator.AnnounceCommand;
 import com.futuremangaming.futurebot.commands.moderator.RemoveCommand;
 import com.futuremangaming.futurebot.commands.regular.PingCommand;
 import com.futuremangaming.futurebot.commands.regular.StatusCommand;
@@ -28,6 +29,7 @@ import com.futuremangaming.futurebot.data.DataBase;
 import com.futuremangaming.futurebot.data.FutureEventManager;
 import com.futuremangaming.futurebot.hooks.GuildHook;
 import com.futuremangaming.futurebot.hooks.InviteProtection;
+import com.futuremangaming.futurebot.hooks.LiveAnnouncer;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
@@ -61,6 +63,7 @@ public class FutureBot
     private String modRole = "-1";
     private String subRole = "-1";
     private Set<String> admins = new HashSet<>();
+    private LiveAnnouncer announcer;
 
     public FutureBot() throws Exception
     {
@@ -76,6 +79,8 @@ public class FutureBot
             modRole = config.getString("moderators");
         if (!config.isNull("subscribers"))
             subRole = config.getString("subscribers");
+        if (!config.isNull("live_hook") && !config.isNull("client_id"))
+            announcer = new LiveAnnouncer(config.getString("live_hook"), config.getString("client_id"));
     }
 
     /* Getters & Setters */
@@ -152,6 +157,7 @@ public class FutureBot
             log("Shutting down...", LoggerFlag.INFO);
             if (jda != null) jda.shutdown(free); // annoy dv8 about this not working in 3.x
             if (dataBase != null) dataBase.close();
+            if (announcer != null) announcer.shutdown();
         }
         catch (Exception e)
         {
@@ -238,6 +244,7 @@ public class FutureBot
             // Moderator Commands
             new AddCommand(hook),
             new RemoveCommand(hook),
+            new AnnounceCommand(announcer),
             // Regular Commands
             new PingCommand(),
             new StatusCommand(),

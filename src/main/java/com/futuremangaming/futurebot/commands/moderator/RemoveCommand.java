@@ -45,7 +45,10 @@ public class RemoveCommand extends Command
         String alias = parts[0];
         if (hook.find(alias) == null)
             return "Command `" + alias + "` not found!";
+        int size = hook.getCommands().size();
         hook.removeCommandIf(c -> c.getAlias().equalsIgnoreCase(alias));
+        if (hook.getCommands().size() == size)
+            return "Command `" + alias + "` is protected!";
         if (bot.getDataBase().isAvailable())
         {
             if (bot.getDataBase().removeFrom("Command", "alias = \"" + DataBase.sanitize(alias.toLowerCase()) + "\""))

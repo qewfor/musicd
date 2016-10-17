@@ -24,11 +24,14 @@ import net.dv8tion.jda.core.hooks.InterfacedEventManager;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class FutureEventManager extends InterfacedEventManager
 {
 
     protected Set<EventListener> listeners = Collections.synchronizedSet(new HashSet<>());
+    protected ExecutorService pool = Executors.newCachedThreadPool();
 
     public FutureEventManager()
     {
@@ -60,16 +63,19 @@ public class FutureEventManager extends InterfacedEventManager
     @Override
     public void handle(Event event)
     {
-        for (EventListener listener : listeners)
+        pool.submit(() ->
         {
-            try
+            for (EventListener listener : listeners)
             {
-                listener.onEvent(event);
+                try
+                {
+                    listener.onEvent(event);
+                }
+                catch (Exception e)
+                {
+                    FutureBot.log(ExceptionUtils.getStackTrace(e), LoggerFlag.JDA, LoggerFlag.ERROR);
+                }
             }
-            catch (Exception e)
-            {
-                FutureBot.log(ExceptionUtils.getStackTrace(e), LoggerFlag.JDA, LoggerFlag.ERROR);
-            }
-        }
+        });
     }
 }

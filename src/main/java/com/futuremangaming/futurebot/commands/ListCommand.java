@@ -43,24 +43,24 @@ public class ListCommand extends Command
         builder.append("**Administrator**:");
         commands.stream().filter(
                 c -> c.getClass().getPackage().getName().equals("com.futuremangaming.futurebot.commands.admin")
-        ).map(c -> " `" + c.toString() + "`").forEach(builder::append);
+        ).map(c -> " `" + c.toString() + "`" + (c.isProtected() ? "\\*" : "")).forEach(builder::append);
 
         builder.append("\n\n**Moderator**:");
         commands.stream().filter(
                 c -> c.getClass().getPackage().getName().equals("com.futuremangaming.futurebot.commands.moderator")
-        ).map(c -> " `" + c.toString() + "`").forEach(builder::append);
+        ).map(c -> " `" + c.toString() + "`" + (c.isProtected() ? "\\*" : "")).forEach(builder::append);
 
         builder.append("\n\n**Regular**:");
         commands.stream().filter(
                 c -> c.getClass().getPackage().getName().equals("com.futuremangaming.futurebot.commands.regular")
-        ).map(c -> " `" + c.toString() + "`").forEach(builder::append);
+        ).map(c -> " `" + c.toString() + "`" + (c.isProtected() ? "\\*" : "")).forEach(builder::append);
 
         builder.append("\n\n**Custom**:");
         commands.stream().filter(
                 c -> c.getClass().getSimpleName().equals("Command")
-        ).map(c -> " `" + c.toString() + "`").forEach(builder::append);
+        ).map(c -> " `" + c.toString() + "`" + (c.isProtected() ? "\\*" : "")).forEach(builder::append);
 
-        return builder.append("\n\n_Note: This list will be removed in beta and will instead be hosted and linked to!_").toString();
+        return builder.append("\n\n\\* These commands cannot be removed\n\n_Note: This list will be removed in beta and will instead be hosted and linked to!_").toString();
     }
 
     @Override

@@ -21,7 +21,6 @@ import com.futuremangaming.futurebot.commands.Command;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.events.Event;
-import net.dv8tion.jda.core.events.message.guild.GenericGuildMessageEvent;
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.EventListener;
 import net.dv8tion.jda.core.requests.RestAction;
@@ -78,13 +77,13 @@ public class GuildHook implements EventListener
     @Override
     public void onEvent(Event event)
     {
-        if (event instanceof GenericGuildMessageEvent)
+        if (event instanceof GuildMessageReceivedEvent)
         {
-            if (!((GenericGuildMessageEvent) event).getGuild().getId().equals(guildId)
-                || ((GenericGuildMessageEvent) event).getMessage().isWebhookMessage())
+            if (!((GuildMessageReceivedEvent) event).getGuild().getId().equals(guildId)
+                || ((GuildMessageReceivedEvent) event).getMessage() == null
+                || ((GuildMessageReceivedEvent) event).getMessage().isWebhookMessage())
                 return;
-            if (event instanceof GuildMessageReceivedEvent)
-                onMessage((GuildMessageReceivedEvent) event);
+            onMessage((GuildMessageReceivedEvent) event);
         }
     }
 
