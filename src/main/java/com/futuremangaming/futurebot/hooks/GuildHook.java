@@ -28,8 +28,11 @@ import net.dv8tion.jda.core.requests.RestAction;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class GuildHook implements EventListener
 {
@@ -47,7 +50,10 @@ public class GuildHook implements EventListener
 
     public void registerCommand(Command... commands)
     {
-        Collections.addAll(this.commands, commands);
+        List<String> protectedCommands = new ArrayList<>(getCommands()).parallelStream().map(Command::getAlias).collect(Collectors.toList());
+        Stream.of(commands).filter(
+                c -> !protectedCommands.contains(c.getAlias())
+        ).forEach(this.commands::add);
     }
 
     public Command find(String alias)
@@ -58,9 +64,15 @@ public class GuildHook implements EventListener
         return null;
     }
 
-    public boolean removeCommandIf(Predicate<Command> predicate)
+    public void removeCommandIf(Predicate<Command> predicate)
     {
-        return commands.removeIf(predicate);
+        List<Command> coms = new LinkedList<>(getCommands());
+        coms.parallelStream().filter(Command::isProtected).filter(predicate).forEach(commands::remove);
+    }
+
+    public List<Command> getCommands()
+    {
+        return Collections.unmodifiableList(commands);
     }
 
     @Override

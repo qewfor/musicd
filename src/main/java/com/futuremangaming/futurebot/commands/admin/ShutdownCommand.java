@@ -37,4 +37,10 @@ public class ShutdownCommand extends Command
         return null;
     }
 
+    @Override
+    public boolean isProtected()
+    {
+        return true;
+    }
+
 }

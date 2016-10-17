@@ -53,4 +53,10 @@ public class AddCommand extends Command
         }
         return "Created command **only** for current session, due to the database being unreachable.";
     }
+
+    @Override
+    public boolean isProtected()
+    {
+        return true;
+    }
 }

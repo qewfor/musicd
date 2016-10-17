@@ -39,4 +39,10 @@ public class PingCommand extends Command
         return null;
     }
 
+    @Override
+    public boolean isProtected()
+    {
+        return true;
+    }
+
 }

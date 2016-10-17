@@ -43,13 +43,20 @@ public class RemoveCommand extends Command
             return "**Usage**: `" + Command.PREFIX + getAlias() + " <command>`\n\n**Info**: " +
                     "Commands removed with this may not remove them from the twitch chat!";
         String alias = parts[0];
-        if (!hook.removeCommandIf(c -> c.getAlias().equalsIgnoreCase(alias)))
+        if (hook.find(alias) == null)
             return "Command `" + alias + "` not found!";
+        hook.removeCommandIf(c -> c.getAlias().equalsIgnoreCase(alias));
         if (bot.getDataBase().isAvailable())
         {
             if (bot.getDataBase().removeFrom("Command", "alias = \"" + DataBase.sanitize(alias.toLowerCase()) + "\""))
                 return "Deleted `" + alias + "`!";
         }
         return "Removed command **only** for current session, due to the database being unreachable.";
+    }
+
+    @Override
+    public boolean isProtected()
+    {
+        return true;
     }
 }

@@ -36,4 +36,10 @@ public class StatusCommand extends Command
                 + "\n**Creator**: Minn#6688"
                 + "\n**Source**: <https://github.com/FuturemanGaming/FutureBot-Discord>";
     }
+
+    @Override
+    public boolean isProtected()
+    {
+        return true;
+    }
 }

@@ -43,9 +43,7 @@ import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalTime;
-import java.util.HashSet;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -262,7 +260,8 @@ public class FutureBot
             log("Unable to retrieve commands from database.", LoggerFlag.WARNING);
             return;
         }
-
+        List<Command> oldCommands = new ArrayList<>(hook.getCommands());
+        oldCommands.removeIf(Command::isProtected);
         for (String[] arr : resultSet)
         {
             if (arr[2].equals("2"))
@@ -273,8 +272,11 @@ public class FutureBot
                 hook.removeCommandIf(c -> c.getAlias().equalsIgnoreCase(alias));
             else if (hook.find(alias) == null)
                 hook.registerCommand(new Command(alias, reply));
-            dataBase.removeFrom("Command", "type < 0");
+            oldCommands.removeIf(c -> c.getAlias().equalsIgnoreCase(alias));
         }
+        hook.removeCommandIf(
+                c -> oldCommands.parallelStream().anyMatch(c2 -> c.getAlias().equalsIgnoreCase(c2.getAlias()))
+        );
     }
 
     /* Static Methods */

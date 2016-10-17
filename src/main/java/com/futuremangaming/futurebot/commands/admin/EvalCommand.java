@@ -61,4 +61,10 @@ public class EvalCommand extends Command
         }
         return o == null ? "null" : o.toString();
     }
+
+    @Override
+    public boolean isProtected()
+    {
+        return true;
+    }
 }

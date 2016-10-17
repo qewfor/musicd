@@ -56,4 +56,9 @@ public class Command
     {
         return cmdPattern.matcher(cmd).find();
     }
+
+    public boolean isProtected()
+    {
+        return false;
+    }
 }
