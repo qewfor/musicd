@@ -28,7 +28,7 @@ public class AddCommand extends Command
 
     public AddCommand(GuildHook hook)
     {
-        super("add");
+        super("addcmd");
         this.hook = hook;
     }
 

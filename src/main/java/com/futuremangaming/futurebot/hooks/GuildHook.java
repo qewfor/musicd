@@ -67,7 +67,7 @@ public class GuildHook implements EventListener
     public void removeCommandIf(Predicate<Command> predicate)
     {
         List<Command> coms = new LinkedList<>(getCommands());
-        coms.parallelStream().filter(Command::isProtected).filter(predicate).forEach(commands::remove);
+        coms.parallelStream().filter(c -> !c.isProtected()).filter(predicate).forEach(commands::remove);
     }
 
     public List<Command> getCommands()

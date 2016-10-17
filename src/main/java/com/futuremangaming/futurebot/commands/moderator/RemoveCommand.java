@@ -29,7 +29,7 @@ public class RemoveCommand extends Command
 
     public RemoveCommand(GuildHook hook)
     {
-        super("remove");
+        super("remcmd");
         this.hook = hook;
     }
 
