@@ -43,6 +43,8 @@ public class AddCommand extends Command
                     "Commands added with this route are case-insensitive!";
         String alias = parts[0];
         String reply = parts[1];
+        if (hook.find(alias) != null)
+            return "Command `" + alias + "` already exists!";
         hook.registerCommand(new Command(alias, reply));
         if (bot.getDataBase().isAvailable())
         {

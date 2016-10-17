@@ -34,7 +34,7 @@ public class Command
     {
         this.alias = alias.toLowerCase();
         this.reply = reply;
-        cmdPattern = Pattern.compile("^\\Q" + PREFIX + "\\E\\s*\\Q" + alias + "\\E(?:\\s*(.+))?$", Pattern.DOTALL|Pattern.CASE_INSENSITIVE);
+        cmdPattern = Pattern.compile("^\\Q" + PREFIX + alias + "\\E(?:\\s+(.+))?$", Pattern.DOTALL|Pattern.CASE_INSENSITIVE);
     }
 
     public Command(String alias)
@@ -60,5 +60,11 @@ public class Command
     public boolean isProtected()
     {
         return false;
+    }
+
+    @Override
+    public String toString()
+    {
+        return PREFIX + alias;
     }
 }

@@ -80,7 +80,8 @@ public class GuildHook implements EventListener
     {
         if (event instanceof GenericGuildMessageEvent)
         {
-            if (!((GenericGuildMessageEvent) event).getGuild().getId().equals(guildId))
+            if (!((GenericGuildMessageEvent) event).getGuild().getId().equals(guildId)
+                || ((GenericGuildMessageEvent) event).getMessage().isWebhookMessage())
                 return;
             if (event instanceof GuildMessageReceivedEvent)
                 onMessage((GuildMessageReceivedEvent) event);
@@ -103,7 +104,7 @@ public class GuildHook implements EventListener
 
     public static RestAction<Message> sendMessage(String content, TextChannel channel)
     {
-        if (content == null || content.isEmpty())
+        if (content == null || (content = content.replaceAll("@(everyone|here)", "@\u0001$1")).isEmpty())
             return new RestAction.EmptyRestAction<>(null);
         try
         {

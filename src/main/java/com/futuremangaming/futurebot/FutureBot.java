@@ -17,6 +17,7 @@
 package com.futuremangaming.futurebot;
 
 import com.futuremangaming.futurebot.commands.Command;
+import com.futuremangaming.futurebot.commands.ListCommand;
 import com.futuremangaming.futurebot.commands.admin.EvalCommand;
 import com.futuremangaming.futurebot.commands.admin.ShutdownCommand;
 import com.futuremangaming.futurebot.commands.moderator.AddCommand;
@@ -24,6 +25,7 @@ import com.futuremangaming.futurebot.commands.moderator.RemoveCommand;
 import com.futuremangaming.futurebot.commands.regular.PingCommand;
 import com.futuremangaming.futurebot.commands.regular.StatusCommand;
 import com.futuremangaming.futurebot.data.DataBase;
+import com.futuremangaming.futurebot.data.FutureEventManager;
 import com.futuremangaming.futurebot.hooks.GuildHook;
 import com.futuremangaming.futurebot.hooks.InviteProtection;
 import net.dv8tion.jda.core.AccountType;
@@ -95,17 +97,17 @@ public class FutureBot
 
     public boolean isAdmin(Member member)
     {
-        return admins.contains(member.getUser().getId());
+        return member != null && member.getUser() != null && admins.contains(member.getUser().getId());
     }
 
     public boolean isMod(Member member)
     {
-        return member.getRoles().parallelStream().anyMatch(r -> r.getId().equals(modRole));
+        return member != null && member.getUser() != null && member.getRoles().parallelStream().anyMatch(r -> r.getId().equals(modRole));
     }
 
     public boolean isSub(Member member)
     {
-        return member.getRoles().parallelStream().anyMatch(r -> r.getId().equals(subRole));
+        return member != null && member.getUser() != null && member.getRoles().parallelStream().anyMatch(r -> r.getId().equals(subRole));
     }
 
     /* Connection Management */
@@ -118,6 +120,7 @@ public class FutureBot
                 .setAudioEnabled(false)
                 .setBulkDeleteSplittingEnabled(false)
                 .setEnableShutdownHook(true)
+                .setEventManager(new FutureEventManager())
                 .addListener((EventListener) event ->
                 {
                     if (event instanceof ReadyEvent)
@@ -237,7 +240,9 @@ public class FutureBot
             new RemoveCommand(hook),
             // Regular Commands
             new PingCommand(),
-            new StatusCommand()
+            new StatusCommand(),
+            // Help Command
+            new ListCommand(hook)
         );
 
         executorService.scheduleAtFixedRate(() -> this.syncDataBase(hook), 0, 10, TimeUnit.MINUTES);

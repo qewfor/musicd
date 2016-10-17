@@ -49,18 +49,18 @@ public class InviteProtection implements EventListener
 
     private void onMessage(GuildMessageReceivedEvent event)
     {
+        if (event.getMessage().isWebhookMessage() || event.getAuthor().isBot())
+            return;
         Member member = event.getMember();
-        if (!event.getGuild().getId().equals(guildId)
+        if (!INVITE.matcher(event.getMessage().getRawContent()).find()
+                || !event.getGuild().getId().equals(guildId)
                 || bot.isAdmin(member) || bot.isMod(member) || bot.isSub(member)
                 || !PermissionUtil.checkPermission(event.getChannel(), event.getGuild().getSelfMember(), Permission.MESSAGE_MANAGE))
             return;
-        if (INVITE.matcher(event.getMessage().getRawContent()).find())
-        {
-            event.getMessage().deleteMessage().queue(
-                    m -> GuildHook.sendMessage(
-                            member.getAsMention() + ", sending invites to other discord servers is a subscriber privilege!", event.getChannel()
-                    ).queue()
-            );
-        }
+        event.getMessage().deleteMessage().queue(
+            m -> GuildHook.sendMessage(
+                member.getAsMention() + ", sending invites to other discord servers is a subscriber privilege!", event.getChannel()
+            ).queue()
+        );
     }
 }
