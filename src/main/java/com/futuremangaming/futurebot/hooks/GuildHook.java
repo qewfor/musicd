@@ -84,35 +84,32 @@ public class GuildHook implements EventListener
         String args = "";
         if (content.length > 1)
             args = content[1];
-        Command triggerd = commandExecution(cmd, args, event);
-        /*if (triggerd != null)
-            FutureBot.log("Command " + triggerd.getAlias() + " was triggered", LoggerFlag.INFO);*/
+        Command triggered = commandExecution(cmd, args, event);
+        /*if (triggered != null)
+            FutureBot.log("Command " + triggered.getAlias() + " was triggered", LoggerFlag.INFO);*/
     }
 
     public static RestAction<Message> sendMessage(String content, TextChannel channel)
     {
         if (content == null || content.isEmpty())
-            return null;
+            return new RestAction.EmptyRestAction<>(null);
         try
         {
             return channel.sendMessage(content);
         } catch (Exception ignored)
         {
-            return null;
+            return new RestAction.EmptyRestAction<>(null);
         }
     }
 
     private Command commandExecution(String cmd, String args, GuildMessageReceivedEvent event)
     {
-        // will be replaced later
         TextChannel channel = event.getChannel();
         for (Command c : commands)
         {
             if (c.isCommand(cmd))
             {
-                RestAction<Message> action = sendMessage(c.getReply(args, event, bot), channel);
-                if (action != null)
-                    action.queue();
+                sendMessage(c.getReply(args, event, bot), channel).queue();
                 return c;
             }
         }

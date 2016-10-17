@@ -17,27 +17,27 @@
 package com.futuremangaming.futurebot;
 
 import com.futuremangaming.futurebot.commands.Command;
+import com.futuremangaming.futurebot.commands.admin.EvalCommand;
+import com.futuremangaming.futurebot.commands.admin.ShutdownCommand;
+import com.futuremangaming.futurebot.commands.moderator.AddCommand;
+import com.futuremangaming.futurebot.commands.moderator.RemoveCommand;
+import com.futuremangaming.futurebot.commands.regular.PingCommand;
+import com.futuremangaming.futurebot.commands.regular.StatusCommand;
 import com.futuremangaming.futurebot.data.DataBase;
 import com.futuremangaming.futurebot.hooks.GuildHook;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
 import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.events.ReadyEvent;
-import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import net.dv8tion.jda.core.hooks.EventListener;
-import net.dv8tion.jda.core.requests.RestAction;
 import net.dv8tion.jda.core.utils.SimpleLog;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.io.IOException;
@@ -84,6 +84,11 @@ public class FutureBot
     public DataBase getDataBase()
     {
         return dataBase;
+    }
+
+    public String getModRole()
+    {
+        return modRole;
     }
 
     public boolean isAdmin(Member member)
@@ -209,118 +214,16 @@ public class FutureBot
     private void initHardCommands(GuildHook hook)
     {
         hook.registerCommand(
-                new Command("ping")
-                {
-                    @Override
-                    public String getReply(String args, GuildMessageReceivedEvent event, FutureBot bot)
-                    {
-                        long time = System.currentTimeMillis();
-                        RestAction<Message> action = GuildHook.sendMessage("Pong!", event.getChannel());
-                        if (action != null)
-                            action.queue(m -> m.editMessage("**Ping**: " + (System.currentTimeMillis() - time) +
-                                    "ms").queue());
-                        return null;
-                    }
-                },
-                new Command("eval")
-                {
-                    @Override
-                    public String getReply(String args, GuildMessageReceivedEvent event, FutureBot bot)
-                    {
-                        Member member = event.getMember();
-                        if (!bot.isAdmin(member))
-                            return null;
-                        ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
-                        engine.put("api", event.getJDA());
-                        engine.put("channel", event.getChannel());
-                        engine.put("guild", event.getGuild());
-                        engine.put("event", event);
-                        engine.put("bot", bot);
-                        engine.put("message", event.getMessage());
-                        engine.put("me", member);
-                        Object o;
-                        try
-                        {
-                            o = engine.eval(args);
-                        }
-                        catch (ScriptException e)
-                        {
-                            o = e.getMessage();
-                        }
-                        catch (Exception e)
-                        {
-                            o = e;
-                        }
-                        return o == null ? "null" : o.toString();
-                    }
-                },
-                new Command("shutdown")
-                {
-                    @Override
-                    public String getReply(String args, GuildMessageReceivedEvent event, FutureBot bot)
-                    {
-                        if (bot.isAdmin(event.getMember()))
-                            GuildHook.sendMessage("Shutting down...", event.getChannel()).queue(m -> bot.shutdown(true));
-                        return null;
-                    }
-                },
-                new Command("add")
-                {
-                    @Override
-                    public String getReply(String args, GuildMessageReceivedEvent event, FutureBot bot)
-                    {
-                        if (!event.getMember().getRoles().parallelStream().anyMatch(r -> r.getId().equals(modRole)))
-                            return null;
-                        String[] parts = args.split("\\s+", 2);
-                        if (parts.length < 2)
-                            return "**Usage**: `" + Command.PREFIX + getAlias() + " <trigger> <reply>`\n\n**Info**: " +
-                                    "Commands added with this route are case-insensitive!";
-                        String alias = parts[0];
-                        String reply = parts[1];
-                        hook.registerCommand(new Command(alias, reply));
-                        if (dataBase.isAvailable())
-                        {
-                            if (dataBase.insertInto("Command(alias, reply, type)", alias.toLowerCase(), reply, 0))
-                            {
-                                return "Successfully created new Command!";
-                            }
-                        }
-                        return "Created command **only** for current session, due to the database being unreachable.";
-                    }
-                },
-                new Command("remove")
-                {
-                    @Override
-                    public String getReply(String args, GuildMessageReceivedEvent event, FutureBot bot)
-                    {
-                        if (!event.getMember().getRoles().parallelStream().anyMatch(r -> r.getId().equals(modRole)))
-                            return null;
-                        String[] parts = args.split("\\s+", 2);
-                        if (parts.length < 1)
-                            return "**Usage**: `" + Command.PREFIX + getAlias() + " <command>`\n\n**Info**: " +
-                                    "Commands removed with this may not remove them from the twitch chat!";
-                        String alias = parts[0];
-                        if (!hook.removeCommandIf(c -> c.getAlias().equalsIgnoreCase(alias)))
-                            return "Command `" + alias + "` not found!";
-                        if (dataBase.isAvailable())
-                        {
-                            if (dataBase.removeFrom("Command", "alias = '" + alias.toLowerCase() + "'"))
-                                return "Deleted `" + alias + "`!";
-                        }
-                        return "Removed command **only** for current session, due to the database being unreachable.";
-                    }
-                },
-                new Command("status")
-                {
-                    @Override
-                    public String getReply(String args, GuildMessageReceivedEvent event, FutureBot bot)
-                    {
-                        return "**Status**\n\n"
-                                + "**Database**: " + (dataBase.isAvailable() ? "Connected" : "Disconnected")
-                                + "\n**Creator**: Minn#6688"
-                                + "\n**Source**: <https://github.com/FuturemanGaming/FutureBot-Discord>";
-                    }
-                });
+            // Admin Commands
+            new EvalCommand(),
+            new ShutdownCommand(),
+            // Moderator Commands
+            new AddCommand(hook),
+            new RemoveCommand(hook),
+            // Regular Commands
+            new PingCommand(),
+            new StatusCommand()
+        );
 
         executorService.scheduleAtFixedRate(() -> this.syncDataBase(hook), 0, 10, TimeUnit.MINUTES);
     }
