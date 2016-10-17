@@ -24,7 +24,7 @@ import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
 public class AddCommand extends Command
 {
 
-    protected final GuildHook hook;
+    private final GuildHook hook;
 
     public AddCommand(GuildHook hook)
     {

@@ -21,11 +21,15 @@ import com.futuremangaming.futurebot.commands.Command;
 import com.futuremangaming.futurebot.hooks.GuildHook;
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
 
-public class RemoveCommand extends AddCommand
+public class RemoveCommand extends Command
 {
+
+    private GuildHook hook;
+
     public RemoveCommand(GuildHook hook)
     {
-        super(hook);
+        super("remove");
+        this.hook = hook;
     }
 
     @Override
