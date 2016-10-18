@@ -33,6 +33,11 @@ public class DataBase implements AutoCloseable
         connect(ip, port, database, username, password);
     }
 
+    public DataBase()
+    {
+        available = false;
+    }
+
     public void connect(String ip, int port, String database, String username, String password)
     {
         try

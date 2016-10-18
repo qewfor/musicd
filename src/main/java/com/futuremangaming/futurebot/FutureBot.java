@@ -59,6 +59,7 @@ public class FutureBot
 
     private JDA jda;
     private DataBase dataBase = null;
+    private boolean disabledDB = false;
     private JSONObject config;
     private String modRole = "-1";
     private String subRole = "-1";
@@ -71,6 +72,8 @@ public class FutureBot
         checkConfig();
         if (!config.isNull("ansi") && config.get("ansi") instanceof Boolean)
             LoggerFlag.useColor = config.getBoolean("ansi");
+        if (!config.isNull("database") && !config.getJSONObject("database").isNull("disabled"))
+            disabledDB = config.getJSONObject("database").getBoolean("disabled");
         dataBase = connectDatabase();
         JSONArray array = config.getJSONArray("administrators");
         for (int i = 0; i < array.length(); i++)
@@ -196,6 +199,8 @@ public class FutureBot
 
     private DataBase connectDatabase() throws JSONException
     {
+        if (disabledDB)
+            return new DataBase();
         JSONObject database = config.getJSONObject("database");
         log("Establishing connection to database...", LoggerFlag.INFO);
         DataBase db = new DataBase(
