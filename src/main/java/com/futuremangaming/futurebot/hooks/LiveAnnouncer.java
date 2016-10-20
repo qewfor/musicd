@@ -29,9 +29,13 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 public class LiveAnnouncer
 {
+
+    private Runnable offlineRunnable = null;
+    private Consumer<JSONObject> onLive = null;
 
     private String clientId;
     private String route;
@@ -43,6 +47,16 @@ public class LiveAnnouncer
         this.route = route;
         this.clientId = client_id;
         executorService.scheduleAtFixedRate(this::execute, 0, 2, TimeUnit.MINUTES);
+    }
+
+    public void onLive(Consumer<JSONObject> consumer)
+    {
+        this.onLive = consumer;
+    }
+
+    public void onOffline(Runnable runnable)
+    {
+        this.offlineRunnable = runnable;
     }
 
     public void post(String post)
@@ -67,6 +81,8 @@ public class LiveAnnouncer
         JSONObject stream = getStream();
         if (stream == null)
         {
+            if (executed)
+                offlineRunnable.run();
             executed = false;
             return;
         }
@@ -99,6 +115,8 @@ public class LiveAnnouncer
         {
             FutureBot.log(e.getMessage(), LoggerFlag.ERROR);
         }
+        if (onLive != null)
+            onLive.accept(stream);
     }
 
     private JSONObject getStream()

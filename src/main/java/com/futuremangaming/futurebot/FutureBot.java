@@ -34,6 +34,7 @@ import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
 import net.dv8tion.jda.core.entities.Member;
+import net.dv8tion.jda.core.entities.impl.JDAImpl;
 import net.dv8tion.jda.core.events.ReadyEvent;
 import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import net.dv8tion.jda.core.hooks.EventListener;
@@ -140,6 +141,28 @@ public class FutureBot
                             initHardCommands(hook);
                             jda.addEventListener(hook);
                             jda.addEventListener(new InviteProtection(config.getString("guild_id"), this));
+                            if (announcer != null)
+                            {
+                                // TODO: Replace once JDA 3 allows setting status!
+                                announcer.onLive(s ->
+                                    ((JDAImpl) jda).getClient().send(new JSONObject()
+                                        .put("op", 3)
+                                        .put("d", new JSONObject()
+                                            .put("game", new JSONObject()
+                                                .put("name", s.getString("status"))
+                                                .put("type", 1)
+                                                .put("url", "https://twitch.tv/futuremangaming"))
+                                            .put("since", System.currentTimeMillis())).toString()
+                                ));
+
+                                announcer.onOffline(() ->
+                                    ((JDAImpl) jda).getClient().send(new JSONObject()
+                                        .put("op", 3)
+                                        .put("d", new JSONObject()
+                                            .put("game", JSONObject.NULL)
+                                            .put("since", System.currentTimeMillis())).toString()
+                                ));
+                            }
                         }
                         else
                         {
