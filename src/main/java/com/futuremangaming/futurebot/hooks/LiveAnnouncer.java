@@ -54,7 +54,7 @@ public class LiveAnnouncer
             if (response.getStatus() >= 300)
                 FutureBot.log("Got status code '" + response.getStatus() + ": " + response.getStatusText() + "' trying to announce live stream!", LoggerFlag.FATAL);
             if (response.getStatus() == 400)
-                FutureBot.log("Response: " + new JSONObject(response.getBody()).toString(), LoggerFlag.ERROR);
+                throw new IllegalArgumentException("Response: " + new JSONObject(response.getBody()).toString());
         }
         catch (UnirestException e)
         {
@@ -92,14 +92,20 @@ public class LiveAnnouncer
         reformatted.put("author_name", channel.get("name"));
         reformatted.put("author_icon", channel.get("logo"));
         reformatted.put("author_link", channel.get("url"));
-        post(post.toString());
+        try
+        {
+            post(post.toString());
+        } catch (IllegalArgumentException e)
+        {
+            FutureBot.log(e.getMessage(), LoggerFlag.ERROR);
+        }
     }
 
     private JSONObject getStream()
     {
         try
         {
-            HttpResponse<JsonNode> response = Unirest.get("https://api.twitch.tv/kraken/stream?stream_type=live&channel=futuremangaming")
+            HttpResponse<JsonNode> response = Unirest.get("https://api.twitch.tv/kraken/streams?stream_type=live&channel=futuremangaming")
                     .header("accept","application/vnd.twitchtv.v3+json")
                     .header("content-type", "application/json")
                     .header("client-id", clientId).asJson();
