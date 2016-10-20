@@ -125,52 +125,53 @@ public class FutureBot
     {
         log("Establishing connection to discord...", LoggerFlag.INFO);
         JDABuilder builder = new JDABuilder(AccountType.BOT)
-                .setToken(config.getString("authorization"))
-                .setAudioEnabled(false)
-                .setBulkDeleteSplittingEnabled(false)
-                .setEnableShutdownHook(true)
-                .setEventManager(new FutureEventManager())
-                .addListener((EventListener) event ->
+            .setToken(config.getString("authorization"))
+            .setAudioEnabled(false)
+            .setBulkDeleteSplittingEnabled(false)
+            .setEnableShutdownHook(true)
+            .setEventManager(new FutureEventManager())
+            .addListener((EventListener) event ->
+            {
+                if (event instanceof ReadyEvent)
                 {
-                    if (event instanceof ReadyEvent)
+                    jda = event.getJDA();
+                    if (!config.isNull("guild_id"))
                     {
-                        jda = event.getJDA();
-                        if (!config.isNull("guild_id"))
+                        jda.getRegisteredListeners().parallelStream().forEach(jda::removeEventListener);
+                        GuildHook hook = new GuildHook(config.getString("guild_id"), this);
+                        initHardCommands(hook);
+                        jda.addEventListener(hook);
+                        jda.addEventListener(new InviteProtection(config.getString("guild_id"), this));
+                        if (announcer != null)
                         {
-                            GuildHook hook = new GuildHook(config.getString("guild_id"), this);
-                            initHardCommands(hook);
-                            jda.addEventListener(hook);
-                            jda.addEventListener(new InviteProtection(config.getString("guild_id"), this));
-                            if (announcer != null)
-                            {
-                                // TODO: Replace once JDA 3 allows setting status!
-                                announcer.onLive(s ->
-                                    ((JDAImpl) jda).getClient().send(new JSONObject()
-                                        .put("op", 3)
-                                        .put("d", new JSONObject()
-                                            .put("game", new JSONObject()
-                                                .put("name", s.getString("status"))
-                                                .put("type", 1)
-                                                .put("url", "https://twitch.tv/futuremangaming"))
-                                            .put("since", System.currentTimeMillis())).toString()
-                                ));
+                            // TODO: Replace once JDA 3 allows setting status!
+                            announcer.onLive(s ->
+                                ((JDAImpl) jda).getClient().send(new JSONObject()
+                                    .put("op", 3)
+                                    .put("d", new JSONObject()
+                                        .put("game", new JSONObject()
+                                            .put("name", s.getString("status"))
+                                            .put("type", 1)
+                                            .put("url", "https://twitch.tv/futuremangaming"))
+                                        .put("since", System.currentTimeMillis())).toString()
+                            ));
 
-                                announcer.onOffline(() ->
-                                    ((JDAImpl) jda).getClient().send(new JSONObject()
-                                        .put("op", 3)
-                                        .put("d", new JSONObject()
-                                            .put("game", JSONObject.NULL)
-                                            .put("since", System.currentTimeMillis())).toString()
-                                ));
-                            }
+                            announcer.onOffline(() ->
+                                ((JDAImpl) jda).getClient().send(new JSONObject()
+                                    .put("op", 3)
+                                    .put("d", new JSONObject()
+                                        .put("game", JSONObject.NULL)
+                                        .put("since", System.currentTimeMillis())).toString()
+                            ));
                         }
-                        else
-                        {
-                            log("'guild_id' was not populated!", LoggerFlag.WARNING);
-                        }
-                        log("Successfully connected to Discord!", LoggerFlag.SUCCESS);
                     }
-                });
+                    else
+                    {
+                        log("'guild_id' was not populated!", LoggerFlag.WARNING);
+                    }
+                    log("Successfully connected to Discord!", LoggerFlag.SUCCESS);
+                }
+            });
         if (block)
             builder.buildBlocking();
         else builder.buildAsync();
@@ -231,7 +232,8 @@ public class FutureBot
                 database.getInt("port"),
                 database.getString("database"),
                 database.getString("username"),
-                database.getString("password"));
+                database.getString("password")
+        );
         if (db.isAvailable())
         {
             log("Database connection established!", LoggerFlag.SUCCESS);
