@@ -81,7 +81,7 @@ public class LiveAnnouncer
         JSONObject stream = getStream();
         if (stream == null)
         {
-            if (executed)
+            if (executed && offlineRunnable != null)
                 offlineRunnable.run();
             executed = false;
             return;
