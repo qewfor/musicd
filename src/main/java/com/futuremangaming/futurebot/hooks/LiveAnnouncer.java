@@ -46,7 +46,7 @@ public class LiveAnnouncer
     {
         this.route = route;
         this.clientId = client_id;
-        executorService.scheduleAtFixedRate(this::execute, 0, 2, TimeUnit.MINUTES);
+        executorService.scheduleAtFixedRate(this::execute, 0, 1, TimeUnit.MINUTES);
     }
 
     public void onLive(Consumer<JSONObject> consumer)
@@ -72,7 +72,8 @@ public class LiveAnnouncer
         }
         catch (UnirestException e)
         {
-            FutureBot.log("Encountered UnirestException trying to post to webhook.", LoggerFlag.FATAL, LoggerFlag.ERROR);
+            FutureBot.log("Encountered UnirestException trying to post to webhook.", LoggerFlag.WARNING);
+            FutureBot.log(e.toString(), LoggerFlag.ERROR);
         }
     }
 
@@ -111,7 +112,7 @@ public class LiveAnnouncer
         try
         {
             post(post.toString());
-        } catch (IllegalArgumentException e)
+        } catch (Exception e)
         {
             FutureBot.log(e.getMessage(), LoggerFlag.ERROR);
         }
@@ -123,23 +124,28 @@ public class LiveAnnouncer
     {
         try
         {
-            HttpResponse<JsonNode> response = Unirest.get("https://api.twitch.tv/kraken/streams?stream_type=live&channel=futuremangaming")
+            HttpResponse<JsonNode> response = Unirest.get("https://api.twitch.tv/kraken/streams/futuremangaming")
                     .header("accept","application/vnd.twitchtv.v3+json")
                     .header("content-type", "application/json")
                     .header("client-id", clientId).asJson();
-            if (response.getStatus() >= 300 || response.getBody().getObject().isNull("streams"))
-                return null;
-            JSONArray streams = response.getBody().getObject().getJSONArray("streams");
-            if (streams.length() == 1)
+            JSONObject object = response.getBody().getObject();
+            if (response.getStatus() >= 300)
             {
-                JSONObject obj = streams.getJSONObject(0);
-                if (!obj.isNull("_id"))
-                    return obj;
-            }
-            return null;
+                FutureBot.log(
+                        "Got status " + response.getStatus() + ": " + response.getStatusText() + " trying to query stream!",
+                        LoggerFlag.FATAL,
+                        LoggerFlag.ERROR
+                );
+                if (object != null)
+                    FutureBot.log("JSON: " + object.toString(), LoggerFlag.INFO);
+                return null;
+            } else if (object.isNull("stream")) return null;
+            return object.getJSONObject("stream");
         }
         catch (UnirestException e)
         {
+            FutureBot.log("Encountered UnirestException trying to query stream!", LoggerFlag.WARNING);
+            FutureBot.log(e.toString(), LoggerFlag.ERROR);
             return null;
         }
 
