@@ -40,6 +40,7 @@ public class LiveAnnouncer
     private String clientId;
     private String route;
     private boolean executed = false;
+    private volatile JSONObject lastUpdate = null;
     private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
     public LiveAnnouncer(String route, String client_id)
@@ -58,6 +59,30 @@ public class LiveAnnouncer
     {
         this.offlineRunnable = runnable;
     }
+
+    /* Getters & Setters */
+
+    public boolean isLive()
+    {
+        return lastUpdate != null;
+    }
+
+    public JSONObject getLastUpdate()
+    {
+        return lastUpdate;
+    }
+
+    public Consumer<JSONObject> getOnLive()
+    {
+        return onLive;
+    }
+
+    public Runnable getOnOffline()
+    {
+        return offlineRunnable;
+    }
+
+    /* Internals */
 
     public void post(String post)
     {
@@ -79,8 +104,8 @@ public class LiveAnnouncer
 
     private synchronized void execute()
     {
-        JSONObject stream = getStream();
-        if (stream == null)
+        this.lastUpdate = getStream();
+        if (lastUpdate == null)
         {
             if (executed && offlineRunnable != null)
                 offlineRunnable.run();
@@ -98,12 +123,12 @@ public class LiveAnnouncer
 
         JSONObject reformatted = new JSONObject();
         attachments.put(reformatted);
-        if (!stream.isNull("game"))
-            reformatted.put("footer", "Streaming " + stream.getString("game"));
-        if (!stream.isNull("preview"))
-            reformatted.put("image_url", stream.getJSONObject("preview").getString("medium") + "?rng=" + Integer.toHexString(new Random().nextInt()));
+        if (!lastUpdate.isNull("game"))
+            reformatted.put("footer", "Streaming " + lastUpdate.getString("game"));
+        if (!lastUpdate.isNull("preview"))
+            reformatted.put("image_url", lastUpdate.getJSONObject("preview").getString("medium") + "?rng=" + Integer.toHexString(new Random().nextInt()));
 
-        JSONObject channel = stream.getJSONObject("channel");
+        JSONObject channel = lastUpdate.getJSONObject("channel");
         reformatted.put("color", "#6441A5");
         reformatted.put("title", channel.get("status")).put("title_link", channel.getString("url"));
         reformatted.put("author_name", channel.get("name"));
@@ -115,9 +140,11 @@ public class LiveAnnouncer
         } catch (Exception e)
         {
             FutureBot.log(e.getMessage(), LoggerFlag.ERROR);
+        } finally
+        {
+            if (onLive != null)
+                onLive.accept(lastUpdate);
         }
-        if (onLive != null)
-            onLive.accept(stream);
     }
 
     private JSONObject getStream()

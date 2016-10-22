@@ -150,10 +150,12 @@ public class FutureBot
                                     .put("op", 3)
                                     .put("d", new JSONObject()
                                         .put("game", new JSONObject()
-                                            .put("name", s.getString("status"))
+                                            .put("name", s.getJSONObject("channel").getString("status"))
                                             .put("type", 1)
                                             .put("url", "https://twitch.tv/futuremangaming"))
-                                        .put("since", System.currentTimeMillis())).toString()
+                                        .put("since", System.currentTimeMillis())
+                                        .put("afk", false)
+                                        .put("status", "online")).toString()
                             ));
 
                             announcer.onOffline(() ->
@@ -161,8 +163,13 @@ public class FutureBot
                                     .put("op", 3)
                                     .put("d", new JSONObject()
                                         .put("game", JSONObject.NULL)
-                                        .put("since", System.currentTimeMillis())).toString()
+                                        .put("since", System.currentTimeMillis())
+                                        .put("afk", false)
+                                        .put("status", "idle")).toString()
                             ));
+
+                            if (announcer.isLive())
+                                announcer.getOnLive().accept(announcer.getLastUpdate());
                         }
                     }
                     else
