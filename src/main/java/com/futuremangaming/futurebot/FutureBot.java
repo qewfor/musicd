@@ -28,16 +28,13 @@ import com.futuremangaming.futurebot.commands.regular.StatusCommand;
 import com.futuremangaming.futurebot.data.DataBase;
 import com.futuremangaming.futurebot.data.FutureEventManager;
 import com.futuremangaming.futurebot.hooks.GuildHook;
-import com.futuremangaming.futurebot.hooks.InviteProtection;
 import com.futuremangaming.futurebot.hooks.LiveAnnouncer;
+import com.futuremangaming.futurebot.hooks.ReadyListener;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
 import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.impl.JDAImpl;
-import net.dv8tion.jda.core.events.ReadyEvent;
 import net.dv8tion.jda.core.exceptions.RateLimitedException;
-import net.dv8tion.jda.core.hooks.EventListener;
 import net.dv8tion.jda.core.utils.SimpleLog;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
@@ -104,6 +101,11 @@ public class FutureBot
         return modRole;
     }
 
+    public LiveAnnouncer getAnnouncer()
+    {
+        return announcer;
+    }
+
     public boolean isAdmin(Member member)
     {
         return member != null && member.getUser() != null && admins.contains(member.getUser().getId());
@@ -119,6 +121,11 @@ public class FutureBot
         return member != null && member.getUser() != null && member.getRoles().parallelStream().anyMatch(r -> r.getId().equals(subRole));
     }
 
+    public void setJDA(JDA api)
+    {
+        this.jda = api;
+    }
+
     /* Connection Management */
 
     public void connectDiscord(boolean block) throws LoginException, InterruptedException, RateLimitedException
@@ -130,58 +137,31 @@ public class FutureBot
             .setBulkDeleteSplittingEnabled(false)
             .setEnableShutdownHook(true)
             .setEventManager(new FutureEventManager())
-            .addListener((EventListener) event ->
-            {
-                if (event instanceof ReadyEvent)
-                {
-                    jda = event.getJDA();
-                    if (!config.isNull("guild_id"))
-                    {
-                        jda.getRegisteredListeners().parallelStream().forEach(jda::removeEventListener);
-                        GuildHook hook = new GuildHook(config.getString("guild_id"), this);
-                        initHardCommands(hook);
-                        jda.addEventListener(hook);
-                        jda.addEventListener(new InviteProtection(config.getString("guild_id"), this));
-                        if (announcer != null)
-                        {
-                            // TODO: Replace once JDA 3 allows setting status!
-                            announcer.onLive(s ->
-                                ((JDAImpl) jda).getClient().send(new JSONObject()
-                                    .put("op", 3)
-                                    .put("d", new JSONObject()
-                                        .put("game", new JSONObject()
-                                            .put("name", s.getJSONObject("channel").getString("status"))
-                                            .put("type", 1)
-                                            .put("url", "https://twitch.tv/futuremangaming"))
-                                        .put("since", System.currentTimeMillis())
-                                        .put("afk", false)
-                                        .put("status", "online")).toString()
-                            ));
-
-                            announcer.onOffline(() ->
-                                ((JDAImpl) jda).getClient().send(new JSONObject()
-                                    .put("op", 3)
-                                    .put("d", new JSONObject()
-                                        .put("game", JSONObject.NULL)
-                                        .put("since", System.currentTimeMillis())
-                                        .put("afk", false)
-                                        .put("status", "idle")).toString()
-                            ));
-
-                            if (announcer.isLive())
-                                announcer.getOnLive().accept(announcer.getLastUpdate());
-                        }
-                    }
-                    else
-                    {
-                        log("'guild_id' was not populated!", LoggerFlag.WARNING);
-                    }
-                    log("Successfully connected to Discord!", LoggerFlag.SUCCESS);
-                }
-            });
+            .addListener(new ReadyListener(this));
         if (block)
             builder.buildBlocking();
         else builder.buildAsync();
+    }
+
+
+    public void initHardCommands(GuildHook hook)
+    {
+        hook.registerCommand(
+                // Admin Commands
+                new EvalCommand(),
+                new ShutdownCommand(),
+                // Moderator Commands
+                new AddCommand(hook),
+                new RemoveCommand(hook),
+                new AnnounceCommand(announcer),
+                // Regular Commands
+                new PingCommand(),
+                new StatusCommand(),
+                // Help Command
+                new ListCommand(hook)
+        );
+
+        executorService.scheduleAtFixedRate(() -> this.syncDataBase(hook), 0, 10, TimeUnit.MINUTES);
     }
 
     public void shutdown(boolean free)
@@ -272,26 +252,6 @@ public class FutureBot
         }
     }
 
-    private void initHardCommands(GuildHook hook)
-    {
-        hook.registerCommand(
-            // Admin Commands
-            new EvalCommand(),
-            new ShutdownCommand(),
-            // Moderator Commands
-            new AddCommand(hook),
-            new RemoveCommand(hook),
-            new AnnounceCommand(announcer),
-            // Regular Commands
-            new PingCommand(),
-            new StatusCommand(),
-            // Help Command
-            new ListCommand(hook)
-        );
-
-        executorService.scheduleAtFixedRate(() -> this.syncDataBase(hook), 0, 10, TimeUnit.MINUTES);
-    }
-
     private void syncDataBase(GuildHook hook)
     {
         try
@@ -349,7 +309,7 @@ public class FutureBot
             builder.append(" ").append(flag.toString());
         synchronized (System.err)
         {
-            System.out.println(builder.append(" ").append(message.replace("\n", "\n + \t\t")).toString());
+            System.out.println(builder.append(" ").append(message.trim().replace("\n", "\n" + builder.toString())).toString());
         }
     }
 
