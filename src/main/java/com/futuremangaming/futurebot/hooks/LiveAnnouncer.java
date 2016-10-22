@@ -16,7 +16,6 @@
 
 package com.futuremangaming.futurebot.hooks;
 
-import com.futuremangaming.futurebot.FutureBot;
 import com.futuremangaming.futurebot.LoggerFlag;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
@@ -25,11 +24,15 @@ import com.mashape.unirest.http.exceptions.UnirestException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.rmi.UnexpectedException;
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import static com.futuremangaming.futurebot.FutureBot.log;
 
 public class LiveAnnouncer
 {
@@ -47,7 +50,7 @@ public class LiveAnnouncer
     {
         this.route = route;
         this.clientId = client_id;
-        executorService.scheduleAtFixedRate(this::execute, 0, 1, TimeUnit.MINUTES);
+        executorService.scheduleAtFixedRate(this::execute, 0, 3, TimeUnit.MINUTES);
     }
 
     public void onLive(Consumer<JSONObject> consumer)
@@ -91,20 +94,27 @@ public class LiveAnnouncer
             HttpResponse<String> response = Unirest.post(route + "/slack").header("content-type", "application/json").body(post)
                     .asString();
             if (response.getStatus() >= 300)
-                FutureBot.log("Got status code '" + response.getStatus() + ": " + response.getStatusText() + "' trying to announce live stream!", LoggerFlag.FATAL);
+                log("Got status code '" + response.getStatus() + ": " + response.getStatusText() + "' trying to announce live stream!", LoggerFlag.FATAL);
             if (response.getStatus() == 400)
                 throw new IllegalArgumentException("Response: " + new JSONObject(response.getBody()).toString());
         }
         catch (UnirestException e)
         {
-            FutureBot.log("Encountered UnirestException trying to post to webhook.", LoggerFlag.WARNING);
-            FutureBot.log(e.toString(), LoggerFlag.ERROR);
+            log("Encountered UnirestException trying to post to webhook.", LoggerFlag.WARNING);
+            log(e.toString(), LoggerFlag.ERROR);
         }
     }
 
     private synchronized void execute()
     {
-        this.lastUpdate = getStream();
+        try
+        {
+            this.lastUpdate = getStream();
+        } catch (UnexpectedException e) // received status code 400
+        {
+            log(e.getMessage(), LoggerFlag.WARNING);
+            return;
+        }
         if (lastUpdate == null)
         {
             if (executed && offlineRunnable != null)
@@ -139,7 +149,7 @@ public class LiveAnnouncer
             post(post.toString());
         } catch (Exception e)
         {
-            FutureBot.log(e.getMessage(), LoggerFlag.ERROR);
+            log(e.getMessage(), LoggerFlag.ERROR);
         } finally
         {
             if (onLive != null)
@@ -147,7 +157,7 @@ public class LiveAnnouncer
         }
     }
 
-    private JSONObject getStream()
+    private JSONObject getStream() throws UnexpectedException
     {
         try
         {
@@ -156,23 +166,25 @@ public class LiveAnnouncer
                     .header("content-type", "application/json")
                     .header("client-id", clientId).asJson();
             JSONObject object = response.getBody().getObject();
+            if (response.getStatus() == 400)
+                throw new UnexpectedException("Unexpected 400 response: " + (Objects.isNull(object) ? "null" : object.toString()));
             if (response.getStatus() >= 300)
             {
-                FutureBot.log(
+                log(
                         "Got status " + response.getStatus() + ": " + response.getStatusText() + " trying to query stream!",
                         LoggerFlag.FATAL,
                         LoggerFlag.ERROR
                 );
                 if (object != null)
-                    FutureBot.log("JSON: " + object.toString(), LoggerFlag.INFO);
+                    log("JSON: " + object.toString(), LoggerFlag.INFO);
                 return null;
             } else if (object.isNull("stream")) return null;
             return object.getJSONObject("stream");
         }
         catch (UnirestException e)
         {
-            FutureBot.log("Encountered UnirestException trying to query stream!", LoggerFlag.WARNING);
-            FutureBot.log(e.toString(), LoggerFlag.ERROR);
+            log("Encountered UnirestException trying to query stream!", LoggerFlag.WARNING);
+            log(e.toString(), LoggerFlag.ERROR);
             return null;
         }
 
