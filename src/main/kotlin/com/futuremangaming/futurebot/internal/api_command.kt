@@ -14,25 +14,10 @@
  * limitations under the License.
  */
 
-package com.futuremangaming.futurebot;
+package com.futuremangaming.futurebot.internal
 
-public enum LoggerFlag
-{
-
-    WARNING(3, false), ERROR(1, true), FATAL(1, false), INFO(7, false), SUCCESS(2, false), JDA(4, true);
-
-    private String color;
-    public static boolean useColor = false;
-
-    LoggerFlag(int colorId, boolean light)
-    {
-        color = "\u001b[3" + colorId + (light ? ";0" : "") + "m";
-    }
-
-    @Override
-    public String toString()
-    {
-        return "[" + (useColor ? color : "") + name() + (useColor ? "\u001b[0m" : "") + "]";
-    }
-
-}
+/**
+ * @author Florian Spieß
+ * @since  2016-12-30
+ */
+// TODO :)

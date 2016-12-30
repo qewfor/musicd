@@ -1,27 +1,51 @@
+buildscript {
+    ext.kotlin_version = '1.0.5-3'
+
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
 plugins {
     id 'com.github.johnrengelman.shadow' version '1.2.3'
     id 'application'
     id 'java'
 }
 
+apply plugin: 'kotlin'
+
+sourceSets {
+    main.kotlin.srcDirs += 'src/main/kotlin'
+    //main.java.excludes += "src/main/java"
+}
+
 group 'com.futuremangaming'
 version '0.1'
 
 compileJava.options.encoding = 'UTF-8'
-mainClassName='com.futuremangaming.futurebot.FutureBot'
+mainClassName = 'com.futuremangaming.futurebot.FutureBotKt'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 repositories {
     jcenter()
+    mavenCentral()
 }
 
 dependencies {
-    compile fileTree(dir: './libs', include: '*.jar')
-    //compile 'net.dv8tion:JDA:2.2.1_375'
+    //compile fileTree(dir: './libs', include: '*.jar')
+    compile 'net.dv8tion:JDA:3.0.BETA2_117'
     compile 'mysql:mysql-connector-java:5.1.40'
     compile group: 'commons-io', name: 'commons-io', version: '2.5'
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+}
+
+compileJava.exclude {
+    "src/main/java"
 }
 
 task wrapper(type: Wrapper) {
