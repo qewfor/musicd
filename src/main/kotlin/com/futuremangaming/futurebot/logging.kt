@@ -18,6 +18,7 @@ package com.futuremangaming.futurebot
 
 import com.futuremangaming.futurebot.AnsiCode.Companion.BLUE
 import com.futuremangaming.futurebot.AnsiCode.Companion.CYAN
+import com.futuremangaming.futurebot.AnsiCode.Companion.CYAN_LIGHT
 import com.futuremangaming.futurebot.AnsiCode.Companion.GREEN
 import com.futuremangaming.futurebot.AnsiCode.Companion.RED
 import com.futuremangaming.futurebot.AnsiCode.Companion.RED_LIGHT
@@ -29,6 +30,8 @@ import com.futuremangaming.futurebot.LoggerTag.INFO
 import com.futuremangaming.futurebot.LoggerTag.INTERNAL
 import com.futuremangaming.futurebot.LoggerTag.OFF
 import com.futuremangaming.futurebot.LoggerTag.TRACE
+import net.dv8tion.jda.core.utils.SimpleLog
+import net.dv8tion.jda.core.utils.SimpleLog.Level
 import org.apache.commons.lang3.exception.ExceptionUtils
 import java.time.LocalDateTime
 import java.time.temporal.ChronoField
@@ -47,7 +50,7 @@ fun getLogger(name: String): Logger =
  * @author Florian Spieß
  * @since  2016-12-30
  */
-class Logger internal constructor(internal val name: String) {
+open class Logger internal constructor(internal val name: String) {
 
     var level = LoggerTag.INFO
     var leveled = true
@@ -72,17 +75,17 @@ class Logger internal constructor(internal val name: String) {
 
             return "$hour:$minute:$second"
         }
-    }
 
-    inline fun lazy(error: Boolean, message: () -> String): String? {
-        synchronized(printLock) {
-            val print = message.invoke()
-            if (print.isBlank()) return null
-            if (error)
-                System.err.println(print)
-            else
-                println(print)
-            return print
+        inline fun lazy(error: Boolean, message: () -> String): String? {
+            synchronized(printLock) {
+                val print = message.invoke()
+                if (print.isBlank()) return null
+                if (error)
+                    System.err.println(print)
+                else
+                    println(print)
+                return print
+            }
         }
     }
 
@@ -169,6 +172,17 @@ enum class LoggerTag(internal val ansi: String) {
     fun toAnsiString(): String {
         return "[$ansi$name$RESET]"
     }
+
+    companion object {
+        fun convert(level: SimpleLog.Level): LoggerTag {
+            when (level) {
+                SimpleLog.Level.TRACE -> return TRACE
+                SimpleLog.Level.WARNING -> return WARN
+                SimpleLog.Level.DEBUG -> return DEBUG
+                else -> return INFO
+            }
+        }
+    }
 }
 
 class AnsiCode {
@@ -223,5 +237,19 @@ class AnsiCode {
 
         fun white(value: String): String       = "$WHITE$value$RESET"
         fun whiteLight(value: String): String  = "$WHITE_LIGHT$value$RESET"
+    }
+}
+
+class SimpleLogger : Logger("JDA"), SimpleLog.LogListener {
+    override fun onError(log: SimpleLog?, err: Throwable?) {
+        log(err!!)
+    }
+
+    override fun onLog(log: SimpleLog?, logLevel: Level?, message: Any?) {
+        log((
+            if (log!!.name == "JDA") ""
+            else "($CYAN_LIGHT${log.name}$RESET) ")
+               + message, LoggerTag.convert(logLevel!!)
+        )
     }
 }

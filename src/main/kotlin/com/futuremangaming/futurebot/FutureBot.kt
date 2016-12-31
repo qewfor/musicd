@@ -16,22 +16,25 @@
 @file:JvmName("FutureBotKt")
 package com.futuremangaming.futurebot
 
+import com.futuremangaming.futurebot.LoggerTag.INTERNAL
+import com.futuremangaming.futurebot.external.LiveListener
 import com.futuremangaming.futurebot.external.WebSocketClient
+import com.futuremangaming.futurebot.internal.CommandManagement
+import com.futuremangaming.futurebot.internal.FutureEventManager
 import net.dv8tion.jda.core.AccountType.BOT
 import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.JDABuilder
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent
-import net.dv8tion.jda.core.hooks.ListenerAdapter
+import net.dv8tion.jda.core.utils.SimpleLog
 import java.io.File
 
 /**
  * @author Florian Spieß
  * @since  2016-12-30
  */
-class FutureBot(private val token: String, val guild: String) : ListenerAdapter() {
+class FutureBot(private val token: String, val guild: String){
 
     companion object {
-        val log = getLogger("FutureBot")
+        val LOG = getLogger("FutureBot")
     }
 
     val client: WebSocketClient = WebSocketClient(Config.fromJSON(File(PATH + "database.json")))
@@ -42,25 +45,23 @@ class FutureBot(private val token: String, val guild: String) : ListenerAdapter(
         client.connect {
             api = JDABuilder(BOT)
                     .setToken(this.token)
-                    .addListener(this)
+                    .setEventManager(FutureEventManager(true))
+                    .addListener(CommandManagement(this))
+                    .addListener(LiveListener())
+                    .setAudioEnabled(false)
                     .buildAsync()
-        }
-    }
-
-    override fun onMessageReceived(event: MessageReceivedEvent?) {
-        if (event?.author?.isBot!! || event?.guild?.id!! != guild)
-            return
-        when (event?.message?.rawContent) {
-            "!ping" -> event?.channel?.sendMessage("Pong!")?.queue()
         }
     }
 }
 
 
 fun main(vararg args: String) {
+    SimpleLog.LEVEL = SimpleLog.Level.OFF
+    SimpleLog.addListener(SimpleLogger())
+    getLogger("WebSocket").level = INTERNAL
     val loginCfg: Config = Config.fromJSON(File(PATH + "login.json"))
     FutureBot(
             (loginCfg["token"] as? String) ?: throw IllegalStateException("Missing token field in login.json!"),
-            (loginCfg["guild"] as? String) ?: throw IllegalStateException("Missing guild field in login.json")
+            (loginCfg["guild"] as? String) ?: throw IllegalStateException("Missing guild field in login.json!")
     ).connect()
 }

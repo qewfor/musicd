@@ -18,8 +18,6 @@ package com.futuremangaming.futurebot.external
 
 import com.futuremangaming.futurebot.Config
 import com.futuremangaming.futurebot.Logger
-import com.futuremangaming.futurebot.LoggerTag.DEBUG
-import com.futuremangaming.futurebot.LoggerTag.WARN
 import com.futuremangaming.futurebot.external.ConnectionStatus.CONNECTED
 import com.futuremangaming.futurebot.external.ConnectionStatus.DISCONNECTED
 import com.futuremangaming.futurebot.external.ConnectionStatus.INITIALIZING
@@ -31,6 +29,8 @@ import com.neovisionaries.ws.client.WebSocketException
 import com.neovisionaries.ws.client.WebSocketFactory
 import com.neovisionaries.ws.client.WebSocketFrame
 import org.json.JSONObject
+import java.util.Queue
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 
 /**
@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit
 class WebSocketClient(val config: Config) : WebSocketAdapter() {
 
     companion object {
-        val log = getLogger("WebSocket")
+        val LOG = getLogger("WebSocket")
         val factory = WebSocketFactory()
     }
 
@@ -54,6 +54,7 @@ class WebSocketClient(val config: Config) : WebSocketAdapter() {
     internal var status: ConnectionStatus = DISCONNECTED
     internal var keepAlive: Thread? = null
     internal var pong = true
+    internal val sendQueue: Queue<String> = ConcurrentLinkedQueue()
 
     ///////////////////////////
     //// Terminal
@@ -77,7 +78,7 @@ class WebSocketClient(val config: Config) : WebSocketAdapter() {
         if (!socket?.isOpen!!)
             return this
         // send close
-        log.debug("<- Close: $closeCode")
+        LOG.debug("<- Close: $closeCode")
         socket?.disconnect(closeCode)
         return this
     }
@@ -89,9 +90,9 @@ class WebSocketClient(val config: Config) : WebSocketAdapter() {
         }
 
         reconnectTimeout =  Math.min(reconnectTimeout.shl(1), 900) // *2 up to 15 min
-        log.info("Attempting to reconnect in $reconnectTimeout Seconds...")
+        LOG.info("Attempting to reconnect in $reconnectTimeout Seconds...")
         TimeUnit.SECONDS.sleep(reconnectTimeout)
-        log.trace("<- Reconnect attempt")
+        LOG.trace("<- Reconnect attempt")
 
         status = RECONNECTING
         frameFailure = 0
@@ -112,20 +113,20 @@ class WebSocketClient(val config: Config) : WebSocketAdapter() {
     ///////////////////////////
 
     override fun onConnectError(websocket: WebSocket?, exception: WebSocketException?) {
-        log.error("Connection failed: " + exception?.message?.replace(addr, "[REDACTED]"))
+        LOG.error("Connection failed: " + exception?.message?.replace(addr, "[REDACTED]"))
         if (reconnect)
             return reconnect()
-        log.warn("Closing Session!")
+        LOG.warn("Closing Session!")
         destroy()
     }
 
     override fun onDisconnected(websocket: WebSocket?, serverCloseFrame: WebSocketFrame?,
                                 clientCloseFrame: WebSocketFrame?, closedByServer: Boolean) {
         status = DISCONNECTED
-        log.info("Disconnected: " + serverCloseFrame?.closeCode)
+        LOG.info("Disconnected: " + serverCloseFrame?.closeCode)
         if (reconnect)
             return reconnect()
-        log.warn("Closing Session!")
+        LOG.warn("Closing Session!")
         destroy()
     }
 
@@ -134,30 +135,25 @@ class WebSocketClient(val config: Config) : WebSocketAdapter() {
         connectionSuccess = null
 
         if (status === INITIALIZING)
-            log.info("Connected Successfully")
+            LOG.info("Connected Successfully")
         else
-            log.info("Reconnected!")
+            LOG.info("Reconnected!")
 
         status = CONNECTED
         authenticate()
-        log.debug("<- Authentication")
+        LOG.debug("<- Authentication")
+        drainQueue()
     }
 
     override fun onFrame(websocket: WebSocket?, frame: WebSocketFrame?) {
         if (frame?.isPongFrame!!)
             pong = true
-        log.trace("-> ${frame?.opcode}: ${frame?.payloadText?.replace(auth, "[REDACTED]")}")
+        LOG.trace("-> ${frame?.opcode}: ${frame?.payloadText?.replace(auth, "[REDACTED]")}")
         frameFailure = 0
     }
 
-    override fun onSendError(websocket: WebSocket?, cause: WebSocketException?, frame: WebSocketFrame?) {
-        log.log("Failed Send-Frame: ${frame?.opcode}: ${frame?.payloadText}", WARN, DEBUG)
-        if (frame?.isPingFrame!! && frameFailure++ > 6)
-            disconnect()
-    }
-
     override fun onTextMessage(websocket: WebSocket?, text: String?) {
-        // TODO
+        LOG.internal("Received Message: " + text)
     }
 
     override fun onBinaryMessage(websocket: WebSocket?, binary: ByteArray?) {
@@ -165,7 +161,7 @@ class WebSocketClient(val config: Config) : WebSocketAdapter() {
     }
 
     override fun onFrameSent(websocket: WebSocket?, frame: WebSocketFrame?) {
-        log.trace("<- ${frame?.opcode}: ${frame?.payloadText?.replace(auth, "[REDACTED]")}")
+        LOG.trace("<- ${frame?.opcode}: ${frame?.payloadText?.replace(auth, "[REDACTED]")}")
     }
 
     ///////////////////////////
@@ -173,7 +169,7 @@ class WebSocketClient(val config: Config) : WebSocketAdapter() {
     ///////////////////////////
 
     fun authenticate() {
-        socket?.sendText(JSONObject().put("authenticate", auth).toString())
+        send(JSONObject().put("authenticate", auth).toString())
     }
 
     fun setupKeepAlive() {
@@ -181,10 +177,10 @@ class WebSocketClient(val config: Config) : WebSocketAdapter() {
             while (!Thread.currentThread().isInterrupted) {
                 if (!pong && frameFailure++ >= 6)
                     reconnect()
+
                 socket?.sendPing(Logger.timeStamp())
-                try {
-                    TimeUnit.SECONDS.sleep(15)
-                }
+
+                try { TimeUnit.SECONDS.sleep(15) }
                 catch (ex: InterruptedException) { }
             }
         }, "KeepAlive-mWS")
@@ -193,15 +189,49 @@ class WebSocketClient(val config: Config) : WebSocketAdapter() {
         keepAlive?.start()
     }
 
+    fun send(message: String, queue: Boolean = true): WebSocket? {
+        try {
+            if (socket?.isOpen ?: false)
+                return socket?.sendText(message)
+        }
+        catch (ex: WebSocketException) { }
+
+        if (queue)
+            sendQueue.offer(message)
+
+        return socket
+    }
+
+    fun drainQueue() {
+        while (sendQueue.isNotEmpty() && socket?.isOpen ?: false)
+            send(sendQueue.poll())
+    }
+
     init {
-        addr = (config["addr"] as? String)!!
-        auth = (config["auth"] as? String)!!
+        addr = (config["addr"] as? String) ?: throw IllegalArgumentException("Missing addr field in config!")
+        auth = (config["auth"] as? String) ?: throw IllegalArgumentException("Missing auth field in config!")
         reconnect = (config["reconnect"] as? Boolean) ?: false
         setupKeepAlive()
 
         Runtime.getRuntime().addShutdownHook(Thread { this.destroy() })
     }
 
+}
+
+//////////////////////
+//// PhantomAPI
+//////////////////////
+
+fun WebSocketClient.sendMessage(opCode: Int = 0, data: JSONObject = JSONObject()) {
+    val obj = JSONObject()
+    obj["op"] = opCode
+    obj["d"]  = data
+
+    this.send(obj.toString())
+}
+
+operator fun JSONObject.set(s: String, value: Any) {
+    this.put(s, value)
 }
 
 internal enum class ConnectionStatus {
