@@ -29,8 +29,10 @@ import com.neovisionaries.ws.client.WebSocketAdapter
 import com.neovisionaries.ws.client.WebSocketException
 import com.neovisionaries.ws.client.WebSocketFactory
 import com.neovisionaries.ws.client.WebSocketFrame
+import org.apache.commons.collections4.CollectionUtils
 import org.json.JSONObject
 import java.util.Queue
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 
@@ -56,6 +58,7 @@ class WebSocketClient(val config: Config) : WebSocketAdapter() {
     internal var keepAlive: Thread? = null
     internal var pong = true
     internal val sendQueue: Queue<String> = ConcurrentLinkedQueue()
+    internal val callbackMap: MutableMap<String, CompletableFuture<String>> = mutableMapOf()
 
     ///////////////////////////
     //// Terminal
@@ -155,6 +158,20 @@ class WebSocketClient(val config: Config) : WebSocketAdapter() {
 
     override fun onTextMessage(websocket: WebSocket?, text: String?) {
         LOG.internal("Received Message: " + text)
+        val obj: JSONObject = JSONObject(text)
+        val map = obj.toMap()
+        val nonce = if (obj.has("query_id")) obj["query_id"] as String else return
+        val future = if (callbackMap.containsKey(nonce)) callbackMap[nonce] else return
+        val hasResult = CollectionUtils.containsAny(map.keys, setOf("result", "results"))
+        if (!hasResult) {
+            if (map.containsKey("error"))
+                future?.completeExceptionally(RuntimeException(obj["error"].toString()))
+            else future?.completeExceptionally(RuntimeException("No error provided!\n" + obj.toString()))
+            return
+        }
+        val key = if (map.containsKey("result")) "result" else if (map.containsKey("results")) "results" else null
+        if (key !== null) future?.complete(obj[key].toString())
+        else future?.completeExceptionally(RuntimeException("No result located: " + obj.toString()))
     }
 
     override fun onBinaryMessage(websocket: WebSocket?, binary: ByteArray?) {
@@ -229,14 +246,31 @@ class WebSocketClient(val config: Config) : WebSocketAdapter() {
         Runtime.getRuntime().addShutdownHook(Thread { this.destroy() })
     }
 
+    //////////////////////
+    //// PhantomAPI
+    //////////////////////
+
+    fun awaitNonce(nonce: String): String? {
+        val promise: CompletableFuture<String> = this.callbackMap[nonce] ?: return null
+        val obj = promise.get()
+        this.callbackMap.remove(nonce)
+        return obj
+    }
+
+    fun queryKeys(table: String, nonce: String): String? {
+        val promise: CompletableFuture<String> = CompletableFuture()
+        this.callbackMap[nonce] = promise
+        val obj = JSONObject()
+        obj["dbkeys"] = nonce
+        obj["query"]  = JSONObject().set("table", table)
+        this.send(obj.toString())
+        return awaitNonce(nonce)
+    }
+
 }
 
-//////////////////////
-//// PhantomAPI
-//////////////////////
-
-operator fun JSONObject.set(s: String, value: Any) {
-    this.put(s, value)
+operator fun JSONObject.set(key: String, value: Any): JSONObject {
+    return this.put(key, value)
 }
 
 internal enum class ConnectionStatus {

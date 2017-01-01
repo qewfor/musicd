@@ -96,8 +96,8 @@ class CommandManagement(val bot: FutureBot, val prefix: String = "!") : EventLis
         if (rawC.startsWith(prefix).not()) return
 
         val args = rawC.split(Regex("\\s+"), 2)
-        val name = args[0].substring(prefix.length)
-        val cArgs = if (args.size > 1) args[1].toLowerCase() else ""
+        val name = args[0].substring(prefix.length).toLowerCase()
+        val cArgs = if (args.size > 1) args[1] else ""
         commands.filter { name == it.name }
                 .forEach { it.onCommand(cArgs, event, bot) }
     }

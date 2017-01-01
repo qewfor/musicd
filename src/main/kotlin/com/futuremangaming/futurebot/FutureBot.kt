@@ -16,6 +16,7 @@
 @file:JvmName("FutureBotKt")
 package com.futuremangaming.futurebot
 
+import com.futuremangaming.futurebot.LoggerTag.INTERNAL
 import com.futuremangaming.futurebot.external.WebSocketClient
 import com.futuremangaming.futurebot.internal.CommandManagement
 import com.futuremangaming.futurebot.internal.FutureEventManager
@@ -56,6 +57,7 @@ class FutureBot(private val token: String, val guild: String){
 fun main(vararg args: String) {
     SimpleLog.LEVEL = SimpleLog.Level.OFF
     SimpleLog.addListener(SimpleLogger())
+    getLogger("WebSocket").level = INTERNAL
     val loginCfg: Config = Config.fromJSON("login", File(PATH + "login.json"))
     FutureBot(
             (loginCfg["token"] as? String) ?: throw IllegalStateException("Missing token field in login.json!"),
