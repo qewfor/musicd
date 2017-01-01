@@ -31,6 +31,7 @@ import net.dv8tion.jda.core.events.Event
 import net.dv8tion.jda.core.events.user.UserGameUpdateEvent
 import net.dv8tion.jda.core.hooks.EventListener
 import java.awt.Color
+import java.net.URLEncoder
 import java.time.OffsetDateTime
 
 /**
@@ -43,18 +44,18 @@ val twitchColor: Color = Color.decode("#6441A4")
 class LiveListener : EventListener {
 
     companion object {
-        var channel: String? = "237351016511569921" // TODO Change
-        var guild: String = "237300175893299201"    // TODO Change
+        var channel: String? = "106819947652468736"
+        var guild: String = "106819947652468736"
         val LOG = getLogger("Twitch")
     }
 
     var streaming = false
 
-    override fun onEvent(event: Event?) {
+    override fun onEvent(event: Event?) { // todo api query check
         if (event is UserGameUpdateEvent) {
             val user = event.user
             val member = event.guild.getMember(user)
-            if (user.id != "244070237849387008") // TODO Change
+            if (user.id != "95559929384927232")
                 return
             synchronized(streaming) {
                 if (member.game?.type === TWITCH && streaming.not()) {
@@ -72,7 +73,7 @@ class LiveListener : EventListener {
     }
 }
 
-fun LiveListener.announce(channel: TextChannel) {
+fun announce(channel: TextChannel) {
     try {
         channel.sendMessage(embed(stream())).queue({ LOG.info("${GREEN}Announced live event$RESET") })
     }
@@ -83,10 +84,10 @@ fun LiveListener.announce(channel: TextChannel) {
 
 fun stream(): Map<String, Any?>? {
     val client: String = (getConfig("login")["twitch_key"] as? String) ?: return null
-    val response = Unirest.get("https://api.twitch.tv/kraken/streams/timthetatman") // TODO Change
-                     .header("accept", "application/vnd.twitchtv.v3+json")
-                     .header("client-id", client)
-                     .asJson()
+    val response = Unirest.get("https://api.twitch.tv/kraken/streams/65311054") // `65311054` is futureman's twitch id
+                          .header("accept", "application/vnd.twitchtv.v5+json")
+                          .header("client-id", client)
+                          .asJson()
     if (response.status >= 300) {
         LiveListener.LOG.error("[TWITCH] Invalid response: " + response.statusText)
         return null
@@ -94,24 +95,27 @@ fun stream(): Map<String, Any?>? {
     return response.body.`object`?.toMap()
 }
 
+@Suppress("UNCHECKED_CAST", "DEPRECATION")
 fun embed(map: Map<String, Any?>?): MessageEmbed? {
     if (map === null) return null
-    val stream = map["stream"] as? Map<String, Any> ?: throw IllegalStateException("Stream is not live")
-    val previews = stream["preview"] as Map<String, Any>
-    val channel: Map<String, Any> = stream["channel"] as? Map<String, Any> ?: throw IllegalArgumentException("Channel was null")
-    LiveListener.LOG.internal(stream.toString())
-    LiveListener.LOG.internal(channel.toString())
+    val stream   = map["stream"]     as? Map<String, Any> ?: throw IllegalStateException("Stream is not live")
+    val channel  = stream["channel"] as? Map<String, Any> ?: throw IllegalArgumentException("Channel was null")
+    val previews = stream["preview"] as  Map<String, Any>
+
+    LiveListener.LOG.debug(stream.toString())
 
     val builder = EmbedBuilder()
     builder.setUrl("https://twitch.tv/FuturemanGaming")
     builder.setTitle("Futureman is live now!")
-    builder.setDescription("<:fmgSUP:219939370575069194> " + channel["status"]?.toString())
+    builder.setDescription("<:fmgSUP:219939370575069194> " + channel["status"]?.toString()) // what should we do if that emote is changed/removed
     builder.setAuthor("FuturemanGaming", "https://twitch.tv/FuturemanGaming/profile", channel["logo"] as? String)
     builder.setColor(twitchColor)
-    builder.setImage(previews["large"] as String)
+    builder.setImage(previews["large"] as? String)
     builder.setTimestamp(OffsetDateTime.parse(stream["created_at"] as? String))
 
-    builder.addField("Directory", channel["game"] as? String, true)
-    builder.setThumbnail("https://static-cdn.jtvnw.net/ttv-boxart/${channel["game"]}-138x190.jpg") // TODO checks
+    val game = channel["game"] as? String ?: return builder.build() // return if game is null
+
+    builder.addField("Directory", game, true)
+    builder.setThumbnail("https://static-cdn.jtvnw.net/ttv-boxart/${URLEncoder.encode(game)}-138x190.jpg")
     return builder.build()
 }

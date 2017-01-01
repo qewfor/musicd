@@ -1,3 +1,5 @@
+// use: gradlew wrapper
+// run: gradlew clean shadowJar
 buildscript {
     ext.kotlin_version = '1.0.5-3'
 
@@ -39,15 +41,11 @@ repositories {
 dependencies {
     //compile fileTree(dir: './libs', include: '*.jar')
     compile 'net.dv8tion:JDA:3.0.BETA2_117'
-    compile 'mysql:mysql-connector-java:5.1.40'
-    compile group: 'commons-io', name: 'commons-io', version: '2.5'
+    //compile 'mysql:mysql-connector-java:5.1.40'
+    //compile group: 'commons-io', name: 'commons-io', version: '2.5'
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }
 
-compileJava.exclude {
-    "src/main/java"
-}
-
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.1'
+    gradleVersion = '3.2.1'
 }
