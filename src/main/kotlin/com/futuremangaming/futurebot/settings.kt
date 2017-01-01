@@ -24,24 +24,21 @@ import java.util.HashMap
 val PATH = System.getProperty("user.dir") + "/config/"
 internal val configs: HashMap<String, Config> = HashMap()
 
-fun getConfig(name: String): Config {
-    return configs.getOrPut(name) { Config() }
-}
+fun getConfig(name: String): Config =
+        configs.getOrPut(name) { Config() }
 
 /**
  * @author Florian Spieß
  * @since  2016-12-30
  */
-class Config internal constructor() : HashMap<String, Any>() {
+class Config internal constructor(val map: HashMap<String, Any>) : MutableMap<String, Any> by map {
 
-    constructor(map: Map<String, Any>) : this() {
-        super.putAll(map)
-    }
+    constructor() : this(HashMap())
+    constructor(json: JSONObject) : this(json.toMap() as HashMap<String, Any>)
 
     companion object {
-        fun fromJSON(name:String, file: File): Config {
-            return configs.getOrPut(name, { Config(JSONObject(String(IOUtil.readFully(file))).toMap()) })
-        }
+        fun fromJSON(name: String, file: File): Config =
+                configs.getOrPut(name) { Config(JSONObject(String(IOUtil.readFully(file)))) }
     }
 
 }
