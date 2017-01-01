@@ -1,5 +1,5 @@
 /*
- *     Copyright 2016 FuturemanGaming
+ *     Copyright 2014-2017 FuturemanGaming
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ class WebSocketClient(val config: Config) : WebSocketAdapter() {
         reconnectTimeout =  Math.min(reconnectTimeout.shl(1), 900) // *2 up to 15 min
         LOG.info("Attempting to reconnect in $reconnectTimeout Seconds...")
         TimeUnit.SECONDS.sleep(reconnectTimeout)
-        LOG.trace("<- Reconnect attempt")
+        LOG.debug("<- Reconnect attempt")
 
         status = RECONNECTING
         frameFailure = 0
@@ -164,12 +164,21 @@ class WebSocketClient(val config: Config) : WebSocketAdapter() {
         LOG.trace("<- ${frame?.opcode}: ${frame?.payloadText?.replace(auth, "[REDACTED]")}")
     }
 
+    override fun onError(websocket: WebSocket?, cause: WebSocketException?) {
+        LOG.log(cause!!)
+    }
+
+    override fun handleCallbackError(websocket: WebSocket?, cause: Throwable?) {
+        LOG.log(cause!!)
+    }
+
     ///////////////////////////
     //// Operations
     ///////////////////////////
 
     fun authenticate() {
-        send(JSONObject().put("authenticate", auth).toString())
+        socket?.sendText(JSONObject().put("authenticate", auth).toString())
+              ?.sendText(JSONObject().put("version", "version_check").toString())
     }
 
     fun setupKeepAlive() {
@@ -194,7 +203,9 @@ class WebSocketClient(val config: Config) : WebSocketAdapter() {
             if (socket?.isOpen ?: false)
                 return socket?.sendText(message)
         }
-        catch (ex: WebSocketException) { }
+        catch (ex: WebSocketException) {
+            LOG.log(ex)
+        }
 
         if (queue)
             sendQueue.offer(message)
@@ -203,6 +214,7 @@ class WebSocketClient(val config: Config) : WebSocketAdapter() {
     }
 
     fun drainQueue() {
+        LOG.debug("Draining queue....")
         while (sendQueue.isNotEmpty() && socket?.isOpen ?: false)
             send(sendQueue.poll())
     }
@@ -221,14 +233,6 @@ class WebSocketClient(val config: Config) : WebSocketAdapter() {
 //////////////////////
 //// PhantomAPI
 //////////////////////
-
-fun WebSocketClient.sendMessage(opCode: Int = 0, data: JSONObject = JSONObject()) {
-    val obj = JSONObject()
-    obj["op"] = opCode
-    obj["d"]  = data
-
-    this.send(obj.toString())
-}
 
 operator fun JSONObject.set(s: String, value: Any) {
     this.put(s, value)

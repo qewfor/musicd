@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+@file:JvmName("AdminCommands")
 package com.futuremangaming.futurebot.command
 
 import com.futuremangaming.futurebot.FutureBot
@@ -23,11 +23,10 @@ import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
-import javax.script.ScriptException
 
 /**
  * @author Florian Spieß
- * @since 2016-12-31
+ * @since  2016-12-31
  */
 
 val owner = "86699011792191488" // 86699011792191488
@@ -51,9 +50,6 @@ class Eval : AdminCommand("eval") {
         try {
             o = engine.eval(args) ?: "null"
         }
-        catch (ex: ScriptException) {
-            o = ex.cause ?: ex
-        }
         catch (ex: Throwable) {
             o = ex.cause ?: ex
         }
@@ -73,10 +69,9 @@ class Shutdown : AdminCommand("shutdown") {
     }
 }
 
-open class AdminCommand(override val name: String) : AbstractCommand(name, null) {
+open class AdminCommand(override val name: String) : AbstractCommand(name) {
 
-    override fun checkPermission(member: Member): Boolean {
-        return member.user.id == owner
-    }
+    override fun checkPermission(member: Member): Boolean =
+            super.checkPermission(member) && member.user.id == owner
 
 }

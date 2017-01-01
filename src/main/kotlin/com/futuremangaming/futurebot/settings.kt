@@ -39,8 +39,8 @@ class Config internal constructor() : HashMap<String, Any>() {
     }
 
     companion object {
-        fun fromJSON(file: File): Config {
-            return Config(JSONObject(String(IOUtil.readFully(file))).toMap())
+        fun fromJSON(name:String, file: File): Config {
+            return configs.getOrPut(name, { Config(JSONObject(String(IOUtil.readFully(file))).toMap()) })
         }
     }
 

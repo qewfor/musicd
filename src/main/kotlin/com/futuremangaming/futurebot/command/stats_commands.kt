@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:JvmName("commands")
+@file:JvmName("StatCommands")
 package com.futuremangaming.futurebot.command
 
 import com.futuremangaming.futurebot.FutureBot
@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit
 
 /**
  * @author Florian Spieß
- * @since 2016-12-31
+ * @since  2016-12-31
  */
 class Ping : AbstractCommand("ping", "pong")
 class Uptime : SupplierCommand("uptime", { uptime() })
@@ -51,6 +51,6 @@ fun uptime(): String {
     val adjustedS: String? = if (seconds < 1) null else "**$seconds** second(s)"
 
     return arrayOf(adjustedD, adjustedH, adjustedM, adjustedS)
-            .filter { it !== null }
+            .filterNotNull()
             .joinToString(", ")
 }
