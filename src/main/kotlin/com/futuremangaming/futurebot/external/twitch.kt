@@ -16,12 +16,12 @@
 
 package com.futuremangaming.futurebot.external
 
+import com.futuremangaming.futurebot.external.LiveListener.Companion.TWITCH_ID
 import com.futuremangaming.futurebot.getConfig
 import com.futuremangaming.futurebot.getLogger
 import com.mashape.unirest.http.Unirest
 import net.dv8tion.jda.core.EmbedBuilder
 import net.dv8tion.jda.core.JDA
-import net.dv8tion.jda.core.OnlineStatus.OFFLINE
 import net.dv8tion.jda.core.entities.Game.GameType.TWITCH
 import net.dv8tion.jda.core.entities.MessageEmbed
 import net.dv8tion.jda.core.entities.TextChannel
@@ -31,6 +31,7 @@ import net.dv8tion.jda.core.hooks.EventListener
 import java.awt.Color
 import java.net.URLEncoder
 import java.time.OffsetDateTime
+import java.util.concurrent.TimeUnit
 
 /**
  * @author Florian Spieß
@@ -45,48 +46,46 @@ class LiveListener : EventListener {
         var CHANNEL: String? = "106819947652468736"
         var GUILD: String = "106819947652468736"
         var USER: String = "95559929384927232"
+        var TWITCH_ID: String = "65311054"
         val LOG = getLogger("Twitch")
     }
 
     var streaming = false
     var api: JDA? = null
+    var lock = Any()
 
-    override fun onEvent(event: Event?) { // todo api query check
-        api = event?.jda
+    override fun onEvent(event: Event?) {
+        api = event!!.jda
         if (event is UserGameUpdateEvent) {
-            val user = event.user
-            val member = event.guild.getMember(user)
-            if (user.id != USER)
-                return
+            synchronized(lock) {
+                val user = event.user
+                val member = event.guild.getMember(user)
+                if (user.id != USER)
+                    return
 
-            if (member.game?.type === TWITCH) {
-                event.jda.presence.game = member.game
-                onStream(embed(stream()))
-            }
-            else if (member.game?.type !== TWITCH && streaming) {
-                if (member.onlineStatus !== OFFLINE)
-                    onStream(null)
+                if (member.game?.type === TWITCH)
+                    queryTwitch() // did we start? faster than automated query
+                else if (event.previousGame?.type === TWITCH)
+                    queryTwitch() // did we stop?
             }
         }
     }
 
     fun onStream(stream: MessageEmbed?) {
-        synchronized(streaming) {
-            if (streaming) {
-                if (stream === null) {
-                    if (api?.presence?.game !== null)
-                        api?.presence?.game = null
-                    streaming = false
-                }
+        if (streaming) {
+            if (stream === null) {
+                if (api?.presence?.game !== null)
+                    api?.presence?.game = null
+                streaming = false
             }
-            else if (stream !== null){
-                val guild = api?.getGuildById(GUILD)
-                val game = guild?.getMemberById(USER)?.game
-                if (api?.presence?.game === null && game !== null && game.type === TWITCH)
-                    api?.presence?.game = game
-                announce(api?.getTextChannelById(CHANNEL) ?: guild?.publicChannel!!, stream)
-                streaming = true // double check
-            }
+        }
+        else if (stream !== null){
+            val guild = api?.getGuildById(GUILD)
+            val game = guild?.getMemberById(USER)?.game
+            if (api?.presence?.game === null && game !== null && game.type === TWITCH)
+                api?.presence?.game = game
+            announce(api?.getTextChannelById(CHANNEL) ?: guild?.publicChannel!!, stream)
+            streaming = true // double check
         }
     }
 
@@ -99,11 +98,39 @@ class LiveListener : EventListener {
             LOG.log(ex)
         }
     }
+
+    fun queryTwitch() {
+        synchronized(lock) {
+            val stream = stream()
+            val embed = embed(stream)
+
+            onStream(embed)
+        }
+    }
+
+    init {
+        val twitchQuery = Thread {
+            try {
+                while (!Thread.currentThread().isInterrupted) {
+                    TimeUnit.MINUTES.sleep(2)
+                    queryTwitch()
+                }
+            }
+            catch (ex: InterruptedException) {
+                LOG.warn("Interrupted Thread: ${Thread.currentThread().name}")
+            }
+        }
+
+        twitchQuery.name = "Twitch-API"
+        twitchQuery.isDaemon = true
+        twitchQuery.priority = (Thread.MAX_PRIORITY + Thread.NORM_PRIORITY) / 2
+        twitchQuery.start()
+    }
 }
 
 fun stream(): Map<String, Any?>? {
     val client: String = (getConfig("login")["twitch_key"] as? String) ?: return null
-    val response = Unirest.get("https://api.twitch.tv/kraken/streams/65311054") // `65311054` is futureman's twitch id
+    val response = Unirest.get("https://api.twitch.tv/kraken/streams/$TWITCH_ID") // `65311054` is futureman's twitch id
                           .header("accept", "application/vnd.twitchtv.v5+json")
                           .header("client-id", client)
                           .asJson()
@@ -117,9 +144,9 @@ fun stream(): Map<String, Any?>? {
 @Suppress("UNCHECKED_CAST", "DEPRECATION")
 fun embed(map: Map<String, Any?>?): MessageEmbed? {
     if (map === null) return null
-    val stream   = map["stream"]     as? Map<String, Any> ?: throw IllegalStateException("Stream is not live")
-    val channel  = stream["channel"] as? Map<String, Any> ?: throw IllegalArgumentException("Channel was null")
-    val previews = stream["preview"] as  Map<String, Any>
+    val stream   = map["stream"]     as? Map<String, Any> ?: return null
+    val channel  = stream["channel"] as? Map<String, Any> ?: return null
+    val previews = stream["preview"] as? Map<String, Any> ?: return null
 
     LiveListener.LOG.debug(stream.toString())
 

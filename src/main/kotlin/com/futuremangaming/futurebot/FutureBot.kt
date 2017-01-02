@@ -19,7 +19,6 @@ package com.futuremangaming.futurebot
 import com.futuremangaming.futurebot.AnsiCode.Companion.ESC
 import com.futuremangaming.futurebot.LoggerTag.INTERNAL
 import com.futuremangaming.futurebot.external.LiveListener
-import com.futuremangaming.futurebot.external.WebSocketClient
 import com.futuremangaming.futurebot.internal.CommandManagement
 import com.futuremangaming.futurebot.internal.FutureEventManager
 import net.dv8tion.jda.core.AccountType.BOT
@@ -41,21 +40,21 @@ class FutureBot(private val token: String, val guild: String){
         val LOG = getLogger("FutureBot")
     }
 
-    val client: WebSocketClient = WebSocketClient(Config.fromJSON("database", File(PATH + "database.json")))
+    //val client: WebSocketClient = WebSocketClient(Config.fromJSON("database", File(PATH + "database.json")))
     var api: JDA? = null
         private set
 
     fun connect() {
-        client.connect {
-            api = JDABuilder(BOT)
-                    .setToken(this.token)
-                    .setEventManager(FutureEventManager(true))
-                    .addListener(CommandManagement(this))
-                    .addListener(LiveListener())
-                    .addListener(Chat())
-                    .setAudioEnabled(false)
-                    .buildAsync()
-        }
+        //client.connect {
+        api = JDABuilder(BOT)
+                .setToken(this.token)
+                .setEventManager(FutureEventManager(true))
+                .addListener(CommandManagement(this))
+                .addListener(LiveListener())
+        //      .addListener(Chat())
+                .setAudioEnabled(false)
+                .buildAsync()
+        //}
     }
 }
 

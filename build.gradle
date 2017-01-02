@@ -25,7 +25,7 @@ sourceSets {
 }
 
 group 'com.futuremangaming'
-version '0.1'
+version 'ALPHA'
 
 compileJava.options.encoding = 'UTF-8'
 mainClassName = 'com.futuremangaming.futurebot.FutureBotKt'

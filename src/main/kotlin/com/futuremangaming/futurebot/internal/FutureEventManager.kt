@@ -28,6 +28,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadFactory
+import java.util.concurrent.TimeUnit.MINUTES
 
 /**
  * @author Florian Spieß
@@ -70,8 +71,9 @@ class FutureEventManager(val async: Boolean) : IEventManager {
                 else
                     r.run()
                 if (event is ShutdownEvent)
-                    pool?.shutdown()
+                    break
             }
+            pool?.awaitTermination(1, MINUTES)
         }
         thread.name = "EventManager-mW"
         thread.isDaemon = true
