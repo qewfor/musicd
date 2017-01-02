@@ -38,4 +38,4 @@ All of the listed dependencies should include the transitive dependencies. (e.g.
 - Kotlin v1.0.6
     created by [JetBrains](https://github.com/JetBrains)
 - JDA v3.0.BETA2
-    created by [DV8FromTheWorld](https://github.com/JetBrains)
+    created by [DV8FromTheWorld](https://github.com/DV8FromTheWorld)

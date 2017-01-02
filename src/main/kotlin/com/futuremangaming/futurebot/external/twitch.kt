@@ -16,14 +16,12 @@
 
 package com.futuremangaming.futurebot.external
 
-import com.futuremangaming.futurebot.AnsiCode.Companion.CYAN
-import com.futuremangaming.futurebot.AnsiCode.Companion.GREEN
-import com.futuremangaming.futurebot.AnsiCode.Companion.RESET
-import com.futuremangaming.futurebot.external.LiveListener.Companion.LOG
 import com.futuremangaming.futurebot.getConfig
 import com.futuremangaming.futurebot.getLogger
 import com.mashape.unirest.http.Unirest
 import net.dv8tion.jda.core.EmbedBuilder
+import net.dv8tion.jda.core.JDA
+import net.dv8tion.jda.core.OnlineStatus.OFFLINE
 import net.dv8tion.jda.core.entities.Game.GameType.TWITCH
 import net.dv8tion.jda.core.entities.MessageEmbed
 import net.dv8tion.jda.core.entities.TextChannel
@@ -44,41 +42,62 @@ val twitchColor: Color = Color.decode("#6441A4")
 class LiveListener : EventListener {
 
     companion object {
-        var channel: String? = "106819947652468736"
-        var guild: String = "106819947652468736"
+        var CHANNEL: String? = "106819947652468736"
+        var GUILD: String = "106819947652468736"
+        var USER: String = "95559929384927232"
         val LOG = getLogger("Twitch")
     }
 
     var streaming = false
+    var api: JDA? = null
 
     override fun onEvent(event: Event?) { // todo api query check
+        api = event?.jda
         if (event is UserGameUpdateEvent) {
             val user = event.user
             val member = event.guild.getMember(user)
-            if (user.id != "95559929384927232")
+            if (user.id != USER)
                 return
-            synchronized(streaming) {
-                if (member.game?.type === TWITCH && streaming.not()) {
-                    streaming = true
-                    event.jda.presence.game = member.game
-                    announce(event.jda.getTextChannelById(channel) ?: event.jda.getGuildById(guild)?.publicChannel ?: event.guild.publicChannel)
-                }
-                else if (member.game?.type !== TWITCH && streaming) {
-                    streaming = false
-                    event.jda.presence.game = null
-                    LOG.info("${CYAN}Reset status$RESET")
-                }
+
+            if (member.game?.type === TWITCH) {
+                event.jda.presence.game = member.game
+                onStream(embed(stream()))
+            }
+            else if (member.game?.type !== TWITCH && streaming) {
+                if (member.onlineStatus !== OFFLINE)
+                    onStream(null)
             }
         }
     }
-}
 
-fun announce(channel: TextChannel) {
-    try {
-        channel.sendMessage(embed(stream())).queue({ LOG.info("${GREEN}Announced live event$RESET") })
+    fun onStream(stream: MessageEmbed?) {
+        synchronized(streaming) {
+            if (streaming) {
+                if (stream === null) {
+                    if (api?.presence?.game !== null)
+                        api?.presence?.game = null
+                    streaming = false
+                }
+            }
+            else if (stream !== null){
+                val guild = api?.getGuildById(GUILD)
+                val game = guild?.getMemberById(USER)?.game
+                if (api?.presence?.game === null && game !== null && game.type === TWITCH)
+                    api?.presence?.game = game
+                announce(api?.getTextChannelById(CHANNEL) ?: guild?.publicChannel!!, stream)
+                streaming = true // double check
+            }
+        }
     }
-    catch (ex: Exception) {
-        LiveListener.LOG.log(ex)
+
+    fun announce(channel: TextChannel, stream: MessageEmbed) {
+        if (streaming) return
+        try {
+            channel.sendMessage(stream).queue { streaming = true }
+        }
+        catch (ex: Exception) {
+            LOG.log(ex)
+        }
     }
 }
 

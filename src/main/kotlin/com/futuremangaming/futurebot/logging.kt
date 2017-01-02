@@ -17,13 +17,14 @@
 package com.futuremangaming.futurebot
 
 import com.futuremangaming.futurebot.AnsiCode.Companion.BLUE
+import com.futuremangaming.futurebot.AnsiCode.Companion.CLEAN
 import com.futuremangaming.futurebot.AnsiCode.Companion.CYAN
-import com.futuremangaming.futurebot.AnsiCode.Companion.CYAN_LIGHT
 import com.futuremangaming.futurebot.AnsiCode.Companion.GREEN
 import com.futuremangaming.futurebot.AnsiCode.Companion.RED
 import com.futuremangaming.futurebot.AnsiCode.Companion.RED_LIGHT
 import com.futuremangaming.futurebot.AnsiCode.Companion.RESET
 import com.futuremangaming.futurebot.AnsiCode.Companion.WHITE_LIGHT
+import com.futuremangaming.futurebot.AnsiCode.Companion.cyanLight
 import com.futuremangaming.futurebot.LoggerTag.DEBUG
 import com.futuremangaming.futurebot.LoggerTag.ERROR
 import com.futuremangaming.futurebot.LoggerTag.INFO
@@ -33,7 +34,9 @@ import com.futuremangaming.futurebot.LoggerTag.TRACE
 import net.dv8tion.jda.core.utils.SimpleLog
 import net.dv8tion.jda.core.utils.SimpleLog.Level
 import org.apache.commons.lang3.exception.ExceptionUtils
-import java.time.LocalDateTime
+import java.io.PrintStream
+import java.time.OffsetDateTime
+import java.time.ZoneId
 import java.time.temporal.ChronoField
 import java.time.temporal.TemporalAccessor
 import java.util.HashMap
@@ -53,22 +56,31 @@ fun getLogger(name: String): Logger =
 open class Logger internal constructor(internal val name: String) {
 
     var level = LoggerTag.INFO
+    var out = OUT
+    var err = ERR
     var leveled = true
         private set
 
     companion object {
+
+        @JvmField
+        val OUT: PrintStream = System.out
+        @JvmField
+        val ERR: PrintStream = System.err
+
         fun stackTags(tags: List<LoggerTag>): String {
             return tags.joinToString(" ")
         }
 
         fun timeStamp(): String {
-            return timeStamp(LocalDateTime.now())
+            return timeStamp(OffsetDateTime.now())
         }
 
         fun timeStamp(temporal: TemporalAccessor): String {
-            val chronoHour = temporal[ChronoField.HOUR_OF_DAY]
-            val chronoMin  = temporal[ChronoField.MINUTE_OF_HOUR]
-            val chronoSec  = temporal[ChronoField.SECOND_OF_MINUTE]
+            val time = OffsetDateTime.from(temporal).atZoneSameInstant(ZoneId.systemDefault())
+            val chronoHour = time[ChronoField.HOUR_OF_DAY]
+            val chronoMin  = time[ChronoField.MINUTE_OF_HOUR]
+            val chronoSec  = time[ChronoField.SECOND_OF_MINUTE]
             val hour: Any   = if (chronoHour < 10) "0" + chronoHour else chronoHour
             val minute: Any = if (chronoMin < 10)  "0" + chronoMin  else chronoMin
             val second: Any = if (chronoSec < 10)  "0" + chronoSec  else chronoSec
@@ -76,14 +88,12 @@ open class Logger internal constructor(internal val name: String) {
             return "$hour:$minute:$second"
         }
 
-        inline fun lazy(error: Boolean, message: () -> String): String? {
+        inline fun lazy(out: PrintStream = OUT, message: () -> String): String? {
             synchronized(printLock) {
-                val print = message.invoke()
+                val print = message()
                 if (print.isBlank()) return null
-                if (error)
-                    System.err.println(print)
-                else
-                    println(print)
+
+                out.println(print)
                 return print
             }
         }
@@ -95,10 +105,12 @@ open class Logger internal constructor(internal val name: String) {
         if (leveled && tags.none { it.ordinal <= level.ordinal })
             return null
         tags.sortBy { it.ordinal }
+
         val listTags = tags.distinct().filter { it !== OFF }
         val head = "[${timeStamp()}] [$name] ${stackTags(listTags)} "
+        val stream = if (error) err else out
 
-        return lazy(error) { "$head${newLine.matcher(message.trim()).replaceAll(System.lineSeparator() + head)}" }
+        return lazy(stream) { "$head${newLine.matcher(message.trim()).replaceAll(System.lineSeparator() + head)}" }
     }
 
     fun log(message: Throwable): String? {
@@ -135,6 +147,12 @@ open class Logger internal constructor(internal val name: String) {
 
     fun log(message: Any): String? {
         return info(message)
+    }
+
+    fun clean(err: Boolean = false) {
+        lazy(out) { CLEAN }
+
+        if (err) lazy(err) { CLEAN }
     }
 
     //////////////////////////////////
@@ -185,10 +203,13 @@ enum class LoggerTag(internal val ansi: String) {
     }
 }
 
+@Suppress("unused")
 class AnsiCode {
     companion object {
         val ESC = "\u001B"
         val RESET = "$ESC[0m"
+        val CLEAN = "${ESC}c"
+
 
         val BLACK = "$ESC[30m"
         val BLACK_LIGHT  = "$ESC[30;1m"
@@ -248,7 +269,7 @@ class SimpleLogger : Logger("JDA"), SimpleLog.LogListener {
     override fun onLog(log: SimpleLog?, logLevel: Level?, message: Any?) {
         log((
             if (log!!.name == "JDA") ""
-            else "($CYAN_LIGHT${log.name}$RESET) ")
+            else "(${cyanLight(log.name)}) ")
                + message, LoggerTag.convert(logLevel!!)
         )
     }

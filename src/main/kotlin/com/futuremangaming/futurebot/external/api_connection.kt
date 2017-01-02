@@ -19,6 +19,8 @@ package com.futuremangaming.futurebot.external
 
 import com.futuremangaming.futurebot.Config
 import com.futuremangaming.futurebot.Logger
+import com.futuremangaming.futurebot.LoggerTag.DEBUG
+import com.futuremangaming.futurebot.LoggerTag.WARN
 import com.futuremangaming.futurebot.external.ConnectionStatus.CONNECTED
 import com.futuremangaming.futurebot.external.ConnectionStatus.DISCONNECTED
 import com.futuremangaming.futurebot.external.ConnectionStatus.INITIALIZING
@@ -66,10 +68,9 @@ class WebSocketClient(val config: Config) : WebSocketAdapter() {
 
     fun connect(success: (WebSocketClient) -> Unit = { }) {
         if (socket?.isOpen ?: false)
-            return success.invoke(this) // Already connected
+            return success(this) // Already connected
 
         status = INITIALIZING
-        reconnectTimeout = 2
 
         connectionSuccess = success
         socket = factory.setConnectionTimeout(TimeUnit.SECONDS.toMillis(30).toInt())
@@ -157,12 +158,27 @@ class WebSocketClient(val config: Config) : WebSocketAdapter() {
     }
 
     override fun onTextMessage(websocket: WebSocket?, text: String?) {
-        LOG.internal("Received Message: " + text)
         val obj: JSONObject = JSONObject(text)
         val map = obj.toMap()
+
+        if (map.containsKey("autherror")) {
+            //PROTOCOL_ERROR
+            //1002 indicates that an endpoint is terminating the connection due to a protocol error.
+            LOG.log("Received authentication error!", DEBUG, WARN)
+            disconnect(1002)
+            return
+        }
+        else if (map.containsKey("versionresult")) {
+            reconnectTimeout = 2
+            LOG.info("Authentication success!")
+            return
+        }
+
+        // check query
         val nonce = if (obj.has("query_id")) obj["query_id"] as String else return
         val future = if (callbackMap.containsKey(nonce)) callbackMap[nonce] else return
         val hasResult = CollectionUtils.containsAny(map.keys, setOf("result", "results"))
+
         if (!hasResult) {
             if (map.containsKey("error"))
                 future?.completeExceptionally(RuntimeException(obj["error"].toString()))
@@ -170,6 +186,7 @@ class WebSocketClient(val config: Config) : WebSocketAdapter() {
             return
         }
         val key = if (map.containsKey("result")) "result" else if (map.containsKey("results")) "results" else null
+
         if (key !== null) future?.complete(obj[key].toString())
         else future?.completeExceptionally(RuntimeException("No result located: " + obj.toString()))
     }
