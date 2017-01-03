@@ -20,6 +20,7 @@ import com.futuremangaming.futurebot.FutureBot
 import com.futuremangaming.futurebot.command.getAdmin
 import com.futuremangaming.futurebot.command.getStats
 import com.futuremangaming.futurebot.getLogger
+import com.futuremangaming.futurebot.music.getMusic
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.events.Event
@@ -83,6 +84,7 @@ abstract class AbstractCommand(override val name: String, val response: String? 
 class CommandManagement(val bot: FutureBot, val prefix: String = "!") : EventListener {
 
     private val commands: Set<Command> =
+                          getMusic() + // Music: Track
                           getStats() + // Stats: Ping, Uptime
                           getAdmin()   // Admin: Eval, Shutdown
 

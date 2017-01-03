@@ -21,6 +21,7 @@ import com.futuremangaming.futurebot.LoggerTag.INTERNAL
 import com.futuremangaming.futurebot.external.LiveListener
 import com.futuremangaming.futurebot.internal.CommandManagement
 import com.futuremangaming.futurebot.internal.FutureEventManager
+import com.futuremangaming.futurebot.music.MusicModule
 import net.dv8tion.jda.core.AccountType.BOT
 import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.JDABuilder
@@ -34,27 +35,33 @@ import java.io.File
  * @author Florian Spieß
  * @since  2016-12-30
  */
-class FutureBot(private val token: String, val guild: String){
+class FutureBot(token: String) {
 
     companion object {
         val LOG = getLogger("FutureBot")
+
     }
 
     //val client: WebSocketClient = WebSocketClient(Config.fromJSON("database", File(PATH + "database.json")))
+    val musicModule = MusicModule()
     var api: JDA? = null
         private set
 
     fun connect() {
         //client.connect {
         api = JDABuilder(BOT)
-                .setToken(this.token)
+                .setToken(System.getProperty("bot.token"))
                 .setEventManager(FutureEventManager(true))
                 .addListener(CommandManagement(this))
                 .addListener(LiveListener())
         //      .addListener(Chat())
-                .setAudioEnabled(false)
+                .setAudioEnabled(true)
                 .buildAsync()
         //}
+    }
+
+    init {
+        System.setProperty("bot.token", token)
     }
 }
 
@@ -85,7 +92,7 @@ fun main(vararg args: String) {
     getLogger("WebSocket").level = INTERNAL
     val loginCfg: Config = Config.fromJSON("login", File(PATH + "login.json"))
     FutureBot(
-            (loginCfg["token"] as? String) ?: throw IllegalStateException("Missing token field in login.json!"),
-            (loginCfg["guild"] as? String) ?: throw IllegalStateException("Missing guild field in login.json!")
+            (loginCfg["token"] as? String) ?: throw IllegalStateException("Missing token field in login.json!")
+            //(loginCfg["guild"] as? String) ?: throw IllegalStateException("Missing guild field in login.json!")
     ).connect()
 }

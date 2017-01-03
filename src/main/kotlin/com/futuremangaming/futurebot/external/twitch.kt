@@ -22,6 +22,7 @@ import com.futuremangaming.futurebot.getLogger
 import com.mashape.unirest.http.Unirest
 import net.dv8tion.jda.core.EmbedBuilder
 import net.dv8tion.jda.core.JDA
+import net.dv8tion.jda.core.entities.Game
 import net.dv8tion.jda.core.entities.Game.GameType.TWITCH
 import net.dv8tion.jda.core.entities.MessageEmbed
 import net.dv8tion.jda.core.entities.TextChannel
@@ -30,6 +31,7 @@ import net.dv8tion.jda.core.events.user.UserGameUpdateEvent
 import net.dv8tion.jda.core.hooks.EventListener
 import java.awt.Color
 import java.net.URLEncoder
+import java.rmi.UnexpectedException
 import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
 
@@ -43,8 +45,8 @@ val twitchColor: Color = Color.decode("#6441A4")
 class LiveListener : EventListener {
 
     companion object {
-        var CHANNEL: String? = "106819947652468736"
-        var GUILD: String = "106819947652468736"
+        var CHANNEL: String? = "237300175893299201" // todo change these
+        var GUILD: String = "237300175893299201"    // todo change these
         var USER: String = "95559929384927232"
         var TWITCH_ID: String = "65311054"
         val LOG = getLogger("Twitch")
@@ -84,7 +86,14 @@ class LiveListener : EventListener {
             val game = guild?.getMemberById(USER)?.game
             if (api?.presence?.game === null && game !== null && game.type === TWITCH)
                 api?.presence?.game = game
-            announce(api?.getTextChannelById(CHANNEL) ?: guild?.publicChannel!!, stream)
+            else
+                api?.presence?.game = Game.of(stream.fields.firstOrNull()?.value ?: "Futureman is live!", stream.url)
+            announce(
+                api?.getTextChannelById(CHANNEL)
+                   ?: guild?.publicChannel
+                   ?: throw UnexpectedException("No announcement channel found"),
+                stream
+            )
             streaming = true // double check
         }
     }
@@ -118,6 +127,9 @@ class LiveListener : EventListener {
             }
             catch (ex: InterruptedException) {
                 LOG.warn("Interrupted Thread: ${Thread.currentThread().name}")
+            }
+            catch (ex: Exception) {
+                LOG.log(ex)
             }
         }
 
@@ -153,15 +165,15 @@ fun embed(map: Map<String, Any?>?): MessageEmbed? {
     val builder = EmbedBuilder()
     builder.setUrl("https://twitch.tv/FuturemanGaming")
     builder.setTitle("Futureman is live now!")
-    builder.setDescription("<:fmgSUP:219939370575069194> " + channel["status"]?.toString()) // what should we do if that emote is changed/removed
+    builder.setDescription("<:fmgSUP:219939370575069194> ${channel["status"]?.toString()}") // what should we do if that emote is changed/removed
     builder.setAuthor("FuturemanGaming", "https://twitch.tv/FuturemanGaming/profile", channel["logo"] as? String)
     builder.setColor(twitchColor)
-    builder.setImage(previews["large"] as? String)
+    builder.setImage("${previews["large"] as? String}?time=${System.currentTimeMillis()}")
     builder.setTimestamp(OffsetDateTime.parse(stream["created_at"] as? String))
 
     val game = channel["game"] as? String ?: return builder.build() // return if game is null
 
     builder.addField("Directory", game, true)
-    builder.setThumbnail("https://static-cdn.jtvnw.net/ttv-boxart/${URLEncoder.encode(game)}-138x190.jpg")
+    builder.setThumbnail("https://static-cdn.jtvnw.net/ttv-boxart/${URLEncoder.encode(game)}-138x190.jpg?time=${System.currentTimeMillis()}")
     return builder.build()
 }
