@@ -21,6 +21,7 @@ apply plugin: 'kotlin'
 
 sourceSets {
     main.kotlin.srcDirs += 'src/main/kotlin'
+    main.resources { "src/main/resources" }
     //main.java.excludes += "src/main/java"
 }
 

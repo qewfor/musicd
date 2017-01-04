@@ -26,6 +26,24 @@ Secondly run the build task (shadowJar)
  
 Run: `gradlew clean shadowJar`
 
+## Usage
+
+See build before reading this section, make sure you are using the latest version
+
+### Windows
+
+Using [start.bat](/start.bat) will run the provided application jar. 
+Modify the `%loc%` variable with the path to the application jar
+The `%live%` variable decides whether the bot should announce that futureman is currently live or not, if this is true it
+will check if futureman is live and announce it on startup, else it will treat it as offline
+ 
+### Linux
+
+Using [start.sh](/start.sh) will run the provided application jar.
+Modify the `$loc` variable with the path to the application jar
+The `$live` variable decides whether the bot should announce that futureman is currently live or not, if this is true it
+will check if futureman is live and announce it on startup, else it will treat it as offline
+
 ## Requirements
 
 Kotlin v1.0.6
