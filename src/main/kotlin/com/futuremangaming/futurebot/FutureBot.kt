@@ -66,8 +66,9 @@ class FutureBot(token: String) {
         val props = System.getProperties()
         props.putIfAbsent("bot.token", token)
         props.putIfAbsent("bot.guild", "237300175893299201") // home guild; todo change
-        props.putIfAbsent("role.sub", "237389375967723520")  // sub role; todo change
-        props.putIfAbsent("role.mod", "237342881264697344")  // mod role; todo change
+        props.putIfAbsent("role.sub",  "237389375967723520")  // sub role; todo change
+        props.putIfAbsent("role.mod",  "237342881264697344")  // mod role; todo change
+        props.putIfAbsent("channel.music", "266336223440666624") // music channel; todo change
     }
 }
 
