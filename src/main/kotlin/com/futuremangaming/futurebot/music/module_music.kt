@@ -20,6 +20,8 @@ import com.futuremangaming.futurebot.getLogger
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter
+import com.sedmelluq.discord.lavaplayer.source.bandcamp.BandcampAudioSourceManager
+import com.sedmelluq.discord.lavaplayer.source.http.HttpAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
@@ -37,12 +39,12 @@ import net.dv8tion.jda.core.exceptions.PermissionException
 import org.apache.commons.lang3.StringUtils
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.stream.Stream
 
 /**
  * @author Florian Spieß
  * @since  2017-01-02
  */
-
 val LOG = getLogger("MusicModule")
 private val PLAYER_MANAGER = DefaultAudioPlayerManager()
 
@@ -53,7 +55,8 @@ class MusicModule {
             PLAYER_MANAGER.registerSourceManager(YoutubeAudioSourceManager())
             PLAYER_MANAGER.registerSourceManager(SoundCloudAudioSourceManager())
             PLAYER_MANAGER.registerSourceManager(TwitchStreamAudioSourceManager())
-            System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "OFF")
+            PLAYER_MANAGER.registerSourceManager(BandcampAudioSourceManager())
+            PLAYER_MANAGER.registerSourceManager(HttpAudioSourceManager())
         }
     }
 
@@ -62,31 +65,44 @@ class MusicModule {
     fun remote(guild: Guild, voiceChannel: VoiceChannel): PlayerRemote {
         val player = manager.getPlayer(guild)
         val queue = manager.getScheduler(guild)
-        val remote = PlayerRemote(player, queue, guild)
+        val remote = PlayerRemote(player, queue)
         remote.voice = voiceChannel
         return remote
     }
 }
 
-class PlayerRemote(val player: AudioPlayer, val scheduler: TrackScheduler, val guild: Guild) {
+class PlayerRemote(val player: AudioPlayer, val scheduler: TrackScheduler) {
 
     var voice: VoiceChannel? = null
         set(value) { scheduler.voice = value }
+    var isPaused: Boolean
+        get() = player.isPaused
+        set(v) { player.isPaused = v }
 
-    fun handleRequest(request: TrackRequest) {
-        PLAYER_MANAGER.loadItemOrdered(this, request.id, TrackLoadHandler(request))
+    fun handleRequest(request: TrackRequest, allowLive: Boolean = false) {
+        val handler = TrackLoadHandler(request)
+        handler.allowLive = allowLive
+
+        PLAYER_MANAGER.loadItemOrdered(this, request.id, handler)
     }
 
-    fun skipTrack() {
-        scheduler.nextTrack()
+    fun getQueue() = scheduler.queue
+
+    fun getRemainingTime(): Long {
+        return Stream.of(*getQueue().toTypedArray()).parallel()
+                     .mapToLong { it.info.length }
+                     .sum()
     }
+
+    fun skipTrack() = scheduler.nextTrack(true)
 
     fun removeByName(name: String): Boolean {
         val list: MutableList<AudioTrack> = mutableListOf()
         scheduler.queue.forEach {
             if (StringUtils.containsIgnoreCase(it.info.title, name))
-                list.add(it)
+                list += it
         }
+
         return list.isNotEmpty()
     }
 
@@ -128,19 +144,25 @@ class TrackScheduler(val player: AudioPlayer, val guild: Guild, val manager: Mus
     internal var voice: VoiceChannel? = null
 
     fun enqueue(track: AudioTrack): Boolean {
-        if (!player.startTrack(track, true)) {
+        if (track.info.isStream) {
+            return player.startTrack(track, false)
+        }
+        else if (!player.startTrack(track, true)) {
             queue.offer(track)
             return false
         }
+
         return true
     }
 
-    fun nextTrack() {
+    fun nextTrack(skip: Boolean = false): Boolean {
         while (queue.isNotEmpty()) {
-            if (player.startTrack(queue.poll(), false))
-                return
+            if (player.startTrack(queue.poll(), skip))
+                return true
         }
+
         destroy()
+        return false
     }
 
     fun destroy() {

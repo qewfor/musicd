@@ -84,7 +84,7 @@ abstract class AbstractCommand(override val name: String, val response: String? 
 class CommandManagement(val bot: FutureBot, val prefix: String = "!") : EventListener {
 
     private val commands: Set<Command> =
-                          getMusic() + // Music: Track
+                          getMusic() + // Music: Play, Skip
                           getStats() + // Stats: Ping, Uptime
                           getAdmin()   // Admin: Eval, Shutdown
 
@@ -92,8 +92,8 @@ class CommandManagement(val bot: FutureBot, val prefix: String = "!") : EventLis
         if (event.author.isBot) return
 
         val rawC = event.message.rawContent
-        val user = event.author
-        val channel = event.channel
+        //val user = event.author
+        //val channel = event.channel
 
         if (rawC.startsWith(prefix).not()) return
 

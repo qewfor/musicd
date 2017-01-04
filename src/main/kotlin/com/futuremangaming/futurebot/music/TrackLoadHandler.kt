@@ -20,7 +20,6 @@ import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
-import org.apache.commons.lang3.exception.ExceptionUtils
 
 /**
  * @author Florian Spieß
@@ -28,6 +27,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils
  */
 class TrackLoadHandler(val trackRequest: TrackRequest) : AudioLoadResultHandler {
 
+    var allowLive = false
     override fun noMatches() {
         val (remote, id, member, channel) = trackRequest
         send(channel, "${member.asMention}, no tracks found for input `$id`!")
@@ -36,15 +36,26 @@ class TrackLoadHandler(val trackRequest: TrackRequest) : AudioLoadResultHandler 
     override fun loadFailed(exception: FriendlyException?) {
         val (remote, id, member, channel) = trackRequest
         send(channel, "${member.asMention}, failed to load track for id `$id`!")
-        LOG.debug(ExceptionUtils.getStackTrace(exception?.cause))
+        LOG.log(exception!!)
     }
 
     override fun trackLoaded(track: AudioTrack?) {
         if (track === null) return
         val (remote, id, member, channel, message) = trackRequest
         delete(message)
-        if (track.info.isStream)
-            return send(channel, "Unable to play track for id `$id`: Live streams are not supported")
+        if (track.info.isStream) {
+            if (!allowLive) {
+                return send(channel, "${member.asMention}, live streams are not allowed for track requests.")
+            }
+            else {
+                if (remote.scheduler.enqueue(track))
+                    send(channel, "Started live sessions for `${track.info.author}`! [Started by ${member.asMention}]")
+                else
+                    send(channel, "Failed to start live session for `$id`! Sorry to ${member.asMention} :(")
+
+                return
+            }
+        }
 
         val started: Boolean = remote.scheduler.enqueue(track)
         send(channel, "${if (started) "Started playing " else "Loaded "}track `${track.info.title}` [Requested by ${member.asMention}]")

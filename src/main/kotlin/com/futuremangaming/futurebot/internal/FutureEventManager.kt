@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit.MINUTES
  */
 class FutureEventManager(val async: Boolean) : IEventManager {
 
-    private var listeners: Set<EventListener> = ConcurrentHashMap.newKeySet()
+    private var listeners: MutableSet<EventListener> = ConcurrentHashMap.newKeySet()
     val eventQueue: BlockingQueue<Event> = LinkedBlockingQueue()
     val pool: ExecutorService?
 
@@ -47,11 +47,11 @@ class FutureEventManager(val async: Boolean) : IEventManager {
     }
 
     override fun register(listener: Any?) {
-        listeners += (listener as? EventListener) ?: throw IllegalArgumentException()
+        listeners.add(listener as? EventListener ?: throw IllegalArgumentException())
     }
 
     override fun unregister(listener: Any?) {
-        listeners -= (listener as? EventListener) ?: throw IllegalArgumentException()
+        listeners.add(listener as? EventListener ?: throw IllegalArgumentException())
     }
 
     init {

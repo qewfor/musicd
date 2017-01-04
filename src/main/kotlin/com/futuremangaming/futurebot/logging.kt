@@ -72,9 +72,7 @@ open class Logger internal constructor(internal val name: String) {
             return tags.joinToString(" ")
         }
 
-        fun timeStamp(): String {
-            return timeStamp(OffsetDateTime.now())
-        }
+        fun timeStamp(): String =  timeStamp(OffsetDateTime.now())
 
         fun timeStamp(temporal: TemporalAccessor): String {
             val time = OffsetDateTime.from(temporal).atZoneSameInstant(ZoneId.systemDefault())

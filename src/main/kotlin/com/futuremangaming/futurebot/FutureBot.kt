@@ -18,6 +18,7 @@ package com.futuremangaming.futurebot
 
 import com.futuremangaming.futurebot.AnsiCode.Companion.ESC
 import com.futuremangaming.futurebot.LoggerTag.INTERNAL
+import com.futuremangaming.futurebot.LoggerTag.valueOf
 import com.futuremangaming.futurebot.external.LiveListener
 import com.futuremangaming.futurebot.internal.CommandManagement
 import com.futuremangaming.futurebot.internal.FutureEventManager
@@ -30,6 +31,7 @@ import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
 import net.dv8tion.jda.core.utils.SimpleLog
 import java.io.File
+import java.util.Arrays
 
 /**
  * @author Florian Spieß
@@ -61,7 +63,11 @@ class FutureBot(token: String) {
     }
 
     init {
-        System.setProperty("bot.token", token)
+        val props = System.getProperties()
+        props.putIfAbsent("bot.token", token)
+        props.putIfAbsent("bot.guild", "237300175893299201") // home guild; todo change
+        props.putIfAbsent("role.sub", "237389375967723520")  // sub role; todo change
+        props.putIfAbsent("role.mod", "237342881264697344")  // mod role; todo change
     }
 }
 
@@ -90,6 +96,12 @@ fun main(vararg args: String) {
     SimpleLog.LEVEL = SimpleLog.Level.OFF
     SimpleLog.addListener(SimpleLogger())
     getLogger("WebSocket").level = INTERNAL
+    val log = getLogger("Application")
+
+    log.level = try { valueOf(System.getProperty("app.log.level").toUpperCase()) } catch (ex: Exception) { LoggerTag.INFO }
+
+    log.trace("Starting with args:\n${Arrays.toString(args)}")
+    log.trace("System properties:\n${System.getProperties()}")
     val loginCfg: Config = Config.fromJSON("login", File(PATH + "login.json"))
     FutureBot(
             (loginCfg["token"] as? String) ?: throw IllegalStateException("Missing token field in login.json!")
