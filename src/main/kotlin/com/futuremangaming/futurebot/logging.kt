@@ -55,7 +55,7 @@ fun getLogger(name: String): Logger =
  */
 open class Logger internal constructor(internal val name: String) {
 
-    var level = LoggerTag.INFO
+    var level = LoggerTag.valueOf(System.getProperty("bot.log.level", "info").toUpperCase())
     var out = OUT
     var err = ERR
     var leveled = true

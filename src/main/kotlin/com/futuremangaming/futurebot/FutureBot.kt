@@ -17,7 +17,6 @@
 package com.futuremangaming.futurebot
 
 import com.futuremangaming.futurebot.AnsiCode.Companion.ESC
-import com.futuremangaming.futurebot.LoggerTag.INTERNAL
 import com.futuremangaming.futurebot.LoggerTag.valueOf
 import com.futuremangaming.futurebot.external.LiveListener
 import com.futuremangaming.futurebot.internal.CommandManagement
@@ -31,7 +30,7 @@ import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
 import net.dv8tion.jda.core.utils.SimpleLog
 import java.io.File
-import java.util.Arrays
+import java.util.Properties
 
 /**
  * @author Florian Spieß
@@ -40,8 +39,26 @@ import java.util.Arrays
 class FutureBot(token: String) {
 
     companion object {
-        val LOG = getLogger("FutureBot")
+        val LOG = getLogger("Application")
 
+        init {
+            val props = Properties()
+            val resource = props.javaClass.classLoader.getResourceAsStream("default.properties")
+            props.load(resource)
+            resource.close()
+
+            val sysProps = System.getProperties()
+            for ((key, value) in props) {
+                sysProps.putIfAbsent(key, value)
+            }
+
+            SimpleLog.LEVEL = SimpleLog.Level.OFF
+            SimpleLog.addListener(SimpleLogger())
+
+            LOG.level = valueOf(sysProps.getProperty("app.log.level", "info").toUpperCase())
+            LOG.internal("Default properties: $props")
+            LOG.internal("System properties: $sysProps")
+        }
     }
 
     //val client: WebSocketClient = WebSocketClient(Config.fromJSON("database", File(PATH + "database.json")))
@@ -63,12 +80,8 @@ class FutureBot(token: String) {
     }
 
     init {
-        val props = System.getProperties()
-        props.putIfAbsent("bot.token", token)
-        props.putIfAbsent("bot.guild", "237300175893299201") // home guild; todo change
-        props.putIfAbsent("role.sub",  "237389375967723520")  // sub role; todo change
-        props.putIfAbsent("role.mod",  "237342881264697344")  // mod role; todo change
-        props.putIfAbsent("channel.music", "266336223440666624") // music channel; todo change
+        System.getProperties()
+              .putIfAbsent("bot.token", token)
     }
 }
 
@@ -94,18 +107,9 @@ class Chat : ListenerAdapter() {
 }
 
 fun main(vararg args: String) {
-    SimpleLog.LEVEL = SimpleLog.Level.OFF
-    SimpleLog.addListener(SimpleLogger())
-    getLogger("WebSocket").level = INTERNAL
-    val log = getLogger("Application")
-
-    log.level = try { valueOf(System.getProperty("app.log.level").toUpperCase()) } catch (ex: Exception) { LoggerTag.INFO }
-
-    log.trace("Starting with args:\n${Arrays.toString(args)}")
-    log.trace("System properties:\n${System.getProperties()}")
     val loginCfg: Config = Config.fromJSON("login", File(PATH + "login.json"))
     FutureBot(
-            (loginCfg["token"] as? String) ?: throw IllegalStateException("Missing token field in login.json!")
-            //(loginCfg["guild"] as? String) ?: throw IllegalStateException("Missing guild field in login.json!")
+        loginCfg["token"] as? String
+                ?: throw IllegalStateException("Missing token field in login.json!")
     ).connect()
 }

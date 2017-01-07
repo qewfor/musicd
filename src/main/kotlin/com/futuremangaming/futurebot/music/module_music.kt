@@ -157,7 +157,7 @@ class TrackScheduler(val player: AudioPlayer, val guild: Guild, val manager: Mus
 
     fun nextTrack(skip: Boolean = false): Boolean {
         while (queue.isNotEmpty()) {
-            if (player.startTrack(queue.poll(), skip))
+            if (player.startTrack(queue.poll(), !skip))
                 return true
         }
 

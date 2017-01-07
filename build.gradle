@@ -35,18 +35,15 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 repositories {
-    jcenter() // for JDA
+    jcenter() // for JDA / LavaPlayer
     mavenCentral() // for kotlin
-    maven {
-        url 'http://maven.sedmelluq.com' // for LavaPlayer
-    }
 }
 
 dependencies {
     //compile fileTree(dir: './libs', include: '*.jar')
     compile 'net.dv8tion:JDA:3.0.BETA2_118'
-    compile 'com.sedmelluq:lavaplayer:1.1.36'
-    compile 'org.slf4j:slf4j-simple:1.7.22'
+    compile 'com.sedmelluq:lavaplayer:1.1.37'
+    //compile 'org.slf4j:slf4j-simple:1.7.22'
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     //compile group: 'commons-io', name: 'commons-io', version: '2.5'
 }

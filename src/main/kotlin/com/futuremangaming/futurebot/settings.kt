@@ -22,7 +22,7 @@ import java.io.File
 import java.util.HashMap
 
 val PATH = System.getProperty("user.dir") + "/config/"
-internal val configs: HashMap<String, Config> = HashMap()
+internal val configs: HashMap<String, Config> = hashMapOf()
 
 fun getConfig(name: String): Config =
         configs.getOrPut(name) { Config() }

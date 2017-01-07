@@ -48,15 +48,16 @@ class LiveListener : EventListener {
 
     companion object {
         val TWITCH_LIVE_KEY = "twitch.live"
-        init {
-            val props = System.getProperties()
-            props.putIfAbsent(TWITCH_LIVE_KEY, "true")
-        }
+        val TWITCH_USER_KEY = "twitch.user"
+        val TWITCH_CHANNEL_KEY = "twitch.channel"
+        val BOT_GUILD_KEY = "bot.guild"
+        val CHANNEL_LIVE_KEY = "channel.live"
 
-        var CHANNEL: String? = "237300175893299201" // todo change these
-        var GUILD: String = "237300175893299201"    // todo change these
-        var USER: String = "95559929384927232"
-        var TWITCH_ID: String = "65311054"
+
+        var CHANNEL: String? = System.getProperty(CHANNEL_LIVE_KEY, "-1")
+        var GUILD: String = System.getProperty(BOT_GUILD_KEY, "-1")
+        var USER: String = System.getProperty(TWITCH_USER_KEY, "-1")
+        var TWITCH_ID: String = System.getProperty(TWITCH_CHANNEL_KEY, "-1")
         val LOG = getLogger("Twitch")
     }
 
@@ -152,24 +153,31 @@ class LiveListener : EventListener {
 
         LiveListener.LOG.internal(stream.toString())
 
+        val time       = System.currentTimeMillis()
+        val status     = channel ["status"]     ?. toString()
+        val logo       = channel ["logo"]       ?. toString()
+        val preview    = previews["large"]      ?. toString()
+        val created_at = stream  ["created_at"] ?. toString()
+
         val builder = EmbedBuilder()
         builder.setUrl("https://twitch.tv/FuturemanGaming")
         builder.setTitle("Futureman is live now!")
-        builder.setDescription("<:fmgSUP:219939370575069194> ${channel["status"]?.toString()}") // what should we do if that emote is changed/removed
-        builder.setAuthor("FuturemanGaming", "https://twitch.tv/FuturemanGaming/profile", channel["logo"] as? String)
+        builder.setDescription("<:fmgSUP:219939370575069194> $status") // what should we do if that emote is changed/removed
+        builder.setAuthor("FuturemanGaming", "https://twitch.tv/FuturemanGaming/profile", logo)
         builder.setColor(twitchColor)
-        builder.setImage("${previews["large"] as? String}?time=${System.currentTimeMillis()}")
-        builder.setTimestamp(OffsetDateTime.parse(stream["created_at"] as? String))
+        builder.setImage("$preview?time=$time")
 
-        if (OffsetDateTime.parse(stream["create_at"] as String).until(OffsetDateTime.now(), ChronoUnit.SECONDS) < 15)
+        val dateTime = OffsetDateTime.parse(created_at ?: return builder.build())
+        builder.setTimestamp(dateTime)
+        if (dateTime.until(OffsetDateTime.now(), ChronoUnit.SECONDS) < 15)
             return builder.build() // twitch takes some time to create a preview image, if we are too fast we omit it
-        val game = channel["game"] as? String ?: return builder.build() // return if game is null
+
+        val game = URLEncoder.encode(channel["game"] ?. toString() ?: return builder.build())
 
         builder.addField("Directory", game, true)
-        builder.setThumbnail("https://static-cdn.jtvnw.net/ttv-boxart/${URLEncoder.encode(game)}-138x190.jpg?time=${System.currentTimeMillis()}")
+        builder.setThumbnail("https://static-cdn.jtvnw.net/ttv-boxart/$game-138x190.jpg?time=$time")
         return builder.build()
     }
-
 
     fun live() = System.getProperty(TWITCH_LIVE_KEY, "false").toBoolean()
 
