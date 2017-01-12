@@ -40,11 +40,13 @@ class Eval : AdminCommand("eval") {
         engine["args"]  = args
         engine["bot"]   = bot
 
-        engine["api"]     = event.jda
-        engine["author"]  = event.author
-        engine["channel"] = event.channel
-        engine["guild"]   = event.guild
-        engine["me"]      = event.jda.selfUser
+        val (api, author, channel, guild, me, message) = event
+        engine["api"]     = api
+        engine["author"]  = author
+        engine["channel"] = channel
+        engine["guild"]   = guild
+        engine["me"]      = me
+        engine["message"] = message
         var o: Any
 
         try {
@@ -57,14 +59,24 @@ class Eval : AdminCommand("eval") {
         respond(event.channel, o.toString())
     }
 
+    //Used for binding via engine[key] = value
     operator fun ScriptEngine.set(key: String, value: Any) {
         put(key, value)
     }
+
+    //I generate these receiver extensions to destruct
+    //the GuildMessageReceiveEvent for the engine to bind
+    operator fun GuildMessageReceivedEvent.component1() = this.jda
+    operator fun GuildMessageReceivedEvent.component2() = this.author
+    operator fun GuildMessageReceivedEvent.component3() = this.channel
+    operator fun GuildMessageReceivedEvent.component4() = this.guild
+    operator fun GuildMessageReceivedEvent.component5() = this.jda.selfUser
+    operator fun GuildMessageReceivedEvent.component6() = this.message
 }
 
 class Shutdown : AdminCommand("shutdown") {
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
-        FutureBot.LOG.info("Admin issued shutdown... (${event.author.id})")
+        FutureBot.LOG info "Admin issued shutdown... (${event.author.id})"
         event.jda.shutdownNow(true)
     }
 }

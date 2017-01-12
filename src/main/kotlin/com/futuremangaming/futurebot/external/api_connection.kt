@@ -42,6 +42,7 @@ import java.util.concurrent.TimeUnit
  * @author Florian Spieß
  * @since  2016-12-30
  */
+@Deprecated("This class has been suspended until further notice")
 class WebSocketClient(val config: Config) : WebSocketAdapter() {
 
     companion object {
@@ -286,6 +287,7 @@ class WebSocketClient(val config: Config) : WebSocketAdapter() {
 
 }
 
+//Used to bind via json[key] = value
 operator fun JSONObject.set(key: String, value: Any): JSONObject {
     return this.put(key, value)
 }

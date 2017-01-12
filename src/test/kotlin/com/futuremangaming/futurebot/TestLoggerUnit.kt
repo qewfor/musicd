@@ -44,5 +44,5 @@ fun main(args: Array<String>) {
     log1.disable()
     log1.log("Test off") // should not LOG
 
-    Logger.lazy(false) { "Test Log" }
+    Logger.lazy { "Test Log" }
 }
