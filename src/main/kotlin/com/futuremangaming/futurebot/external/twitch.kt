@@ -138,20 +138,20 @@ class LiveListener : EventListener {
                 .asJson()
         if (response.status >= 300) {
             val msg = "Invalid response: " + response.statusText
-            LOG.error(msg)
+            LOG error msg
             throw UnirestException(msg)
         }
         return response.body.`object`?.toMap()
     }
 
-    @Suppress("UNCHECKED_CAST", "DEPRECATION")
+    @Suppress("UNCHECKED_CAST")
     fun embed(map: Map<String, Any?>?): MessageEmbed? {
         if (map === null) return null
         val stream   = map["stream"]     as? Map<String, Any> ?: return null
         val channel  = stream["channel"] as? Map<String, Any> ?: return null
         val previews = stream["preview"] as? Map<String, Any> ?: return null
 
-        LiveListener.LOG.internal(stream.toString())
+        LiveListener.LOG internal stream.toString()
 
         val time       = System.currentTimeMillis()
         val status     = channel ["status"]     ?. toString()
@@ -172,9 +172,10 @@ class LiveListener : EventListener {
         if (dateTime.until(OffsetDateTime.now(), ChronoUnit.SECONDS) < 15)
             return builder.build() // twitch takes some time to create a preview image, if we are too fast we omit it
 
-        val game = URLEncoder.encode(channel["game"] ?. toString() ?: return builder.build())
-
+        var game = channel["game"] ?. toString() ?: return builder.build()
         builder.addField("Directory", game, true)
+
+        game = URLEncoder.encode(game, "UTF-8").replace("+", "%20")
         builder.setThumbnail("https://static-cdn.jtvnw.net/ttv-boxart/$game-138x190.jpg?time=$time")
         return builder.build()
     }
@@ -190,10 +191,10 @@ class LiveListener : EventListener {
                 }
             }
             catch (ex: InterruptedException) {
-                LOG.warn("Interrupted Thread: ${Thread.currentThread().name}")
+                LOG warn "Interrupted Thread: ${Thread.currentThread().name}"
             }
             catch (ex: Exception) {
-                LOG.log(ex)
+                LOG log ex
             }
         }
 

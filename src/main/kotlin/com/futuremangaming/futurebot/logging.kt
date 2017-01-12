@@ -42,6 +42,8 @@ import java.time.temporal.TemporalAccessor
 import java.util.HashMap
 import java.util.regex.Pattern
 
+import kotlin.jvm.JvmField as static
+
 val loggers = HashMap<String, Logger>()
 val printLock = Any()
 val newLine = Pattern.compile("\n\r?")!!
@@ -63,9 +65,9 @@ open class Logger internal constructor(internal val name: String) {
 
     companion object {
 
-        @JvmField
+        @static
         val OUT: PrintStream = System.out
-        @JvmField
+        @static
         val ERR: PrintStream = System.err
 
         fun stackTags(tags: List<LoggerTag>): String {
@@ -111,41 +113,17 @@ open class Logger internal constructor(internal val name: String) {
         return lazy(stream) { "$head${newLine.matcher(message.trim()).replaceAll(System.lineSeparator() + head)}" }
     }
 
-    fun log(message: Throwable): String? {
-        return log(ExceptionUtils.getStackTrace(message), true, ERROR)
-    }
+    fun log(message: Any, vararg tags: LoggerTag): String? = log(message.toString(), false, *tags)
 
-    fun log(message: Any, vararg tags: LoggerTag): String? {
-        return log(message.toString(), false, *tags)
-    }
-
-    fun trace(message: Any): String? {
-        return log(message, TRACE)
-    }
-
-    fun internal(message: Any): String? {
-        return log(message, INTERNAL)
-    }
-
-    fun debug(message: Any): String? {
-        return log(message, DEBUG)
-    }
-
-    fun info(message: Any): String? {
-        return log(message, INFO)
-    }
-
-    fun warn(message: Any): String? {
-        return log(message, TRACE)
-    }
-
-    fun error(message: Any): String? {
-        return log(message.toString(), true, ERROR)
-    }
-
-    fun log(message: Any): String? {
-        return info(message)
-    }
+    infix fun log(message: Throwable): String?   = log(ExceptionUtils.getStackTrace(message))
+    infix fun trace(message: Any): String?       = log(message, TRACE)
+    infix fun internal(message: Any): String?    = log(message, INTERNAL)
+    infix fun debug(message: Any): String?       = log(message, DEBUG)
+    infix fun info(message: Any): String?        = log(message, INFO)
+    infix fun warn(message: Any): String?        = log(message, TRACE)
+    infix fun error(message: Any): String?       = log(message.toString(), true, ERROR)
+    infix fun error(message: Throwable): String? = log(ExceptionUtils.getStackTrace(message), true, ERROR)
+    infix fun log(message: Any): String?         = info(message)
 
     fun clean(err: Boolean = false) {
         lazy(out) { CLEAN }

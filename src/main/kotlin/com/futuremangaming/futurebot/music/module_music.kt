@@ -29,6 +29,8 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason.CLEANUP
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason.STOPPED
+import gnu.trove.TDecorators
+import gnu.trove.map.hash.TLongObjectHashMap
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.Message
@@ -39,7 +41,6 @@ import net.dv8tion.jda.core.exceptions.PermissionException
 import org.apache.commons.lang3.StringUtils
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
-import java.util.stream.Stream
 
 /**
  * @author Florian Spieß
@@ -71,7 +72,7 @@ class MusicModule {
     }
 }
 
-class PlayerRemote(val player: AudioPlayer, val scheduler: TrackScheduler) {
+class PlayerRemote internal constructor(val player: AudioPlayer, val scheduler: TrackScheduler) {
 
     var voice: VoiceChannel? = null
         set(value) { scheduler.voice = value }
@@ -89,21 +90,15 @@ class PlayerRemote(val player: AudioPlayer, val scheduler: TrackScheduler) {
     fun getQueue() = scheduler.queue
 
     fun getRemainingTime(): Long {
-        return Stream.of(*getQueue().toTypedArray()).parallel()
-                     .mapToLong { it.info.length }
-                     .sum()
+        return getQueue()
+                .map { it.duration }
+                .sum()
     }
 
     fun skipTrack() = scheduler.nextTrack(true)
 
-    fun removeByName(name: String): Boolean {
-        val list: MutableList<AudioTrack> = mutableListOf()
-        scheduler.queue.forEach {
-            if (StringUtils.containsIgnoreCase(it.info.title, name))
-                list += it
-        }
-
-        return list.isNotEmpty()
+    fun removeByName(name: String): Boolean = scheduler.queue.removeAll {
+        StringUtils.containsIgnoreCase(it.info.title, name)
     }
 
     fun destroy() {
@@ -113,16 +108,16 @@ class PlayerRemote(val player: AudioPlayer, val scheduler: TrackScheduler) {
 
 class MusicManager {
 
-    private val players: MutableMap<String, AudioPlayer> = mutableMapOf()
-    private val schedulers: MutableMap<AudioPlayer, TrackScheduler> = mutableMapOf()
+    private val players: MutableMap<Long, AudioPlayer> = TDecorators.wrap(TLongObjectHashMap<AudioPlayer>())
+    private val schedulers: MutableMap<AudioPlayer, TrackScheduler> = hashMapOf()
 
     fun resetPlayer(guild: Guild) {
         getPlayer(guild).destroy()
-        schedulers.remove(players.remove(guild.id))
+        schedulers.remove(players.remove(guild.id.toLong()))
     }
 
     fun getPlayer(guild: Guild): AudioPlayer {
-        return players.getOrPut(guild.id) {
+        return players.getOrPut(guild.id.toLong()) {
             val player = PLAYER_MANAGER.createPlayer()
             val scheduler = schedulers.getOrPut(player, { TrackScheduler(player, guild, this@MusicManager) })
 
@@ -133,9 +128,8 @@ class MusicManager {
         }
     }
 
-    fun getScheduler(guild: Guild): TrackScheduler {
-        return schedulers[getPlayer(guild)]!!
-    }
+    fun getScheduler(guild: Guild): TrackScheduler = schedulers[getPlayer(guild)]!!
+
 }
 
 class TrackScheduler(val player: AudioPlayer, val guild: Guild, val manager: MusicManager) : AudioEventAdapter() { // copied from demo
@@ -143,7 +137,7 @@ class TrackScheduler(val player: AudioPlayer, val guild: Guild, val manager: Mus
     val queue: BlockingQueue<AudioTrack> = LinkedBlockingQueue()
     internal var voice: VoiceChannel? = null
 
-    fun enqueue(track: AudioTrack): Boolean {
+    infix fun enqueue(track: AudioTrack): Boolean {
         if (track.info.isStream) {
             return player.startTrack(track, false)
         }

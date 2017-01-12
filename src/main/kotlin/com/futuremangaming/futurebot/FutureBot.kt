@@ -36,14 +36,16 @@ import java.util.Properties
  * @author Florian Spieß
  * @since  2016-12-30
  */
+@Suppress("JAVA_CLASS_ON_COMPANION")
 class FutureBot(token: String) {
 
     companion object {
+        @field:JvmField
         val LOG = getLogger("Application")
 
         init {
             val props = Properties()
-            val resource = props.javaClass.classLoader.getResourceAsStream("default.properties")
+            val resource = this@Companion.javaClass.classLoader.getResourceAsStream("default.properties")
             props.load(resource)
             resource.close()
 
@@ -56,8 +58,8 @@ class FutureBot(token: String) {
             SimpleLog.addListener(SimpleLogger())
 
             LOG.level = valueOf(sysProps.getProperty("app.log.level", "info").toUpperCase())
-            LOG.internal("Default properties: $props")
-            LOG.internal("System properties: $sysProps")
+            LOG internal "Default properties: $props"
+            LOG internal "System properties: $sysProps"
         }
     }
 

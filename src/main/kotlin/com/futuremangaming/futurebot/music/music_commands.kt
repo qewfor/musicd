@@ -23,6 +23,8 @@ import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.core.exceptions.PermissionException
 
+import kotlin.jvm.JvmField as static
+
 fun getMusic() = setOf(Play(), Skip())
 
 /**
@@ -31,9 +33,11 @@ fun getMusic() = setOf(Play(), Skip())
  */
 class Play : MusicCommand("play") {
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
-        if (args.isBlank()) return respond(event.channel, "Provide a link or id to a track resource!")
+        if (args.isBlank())
+            return respond(event.channel, "Provide a link or id to a track resource!")
+
         val member = event.member
-        val voice = member.voiceState.channel ?: return respond(event.channel, "You can only request something when you are in a voice channel")
+        val voice = event.guild.getVoiceChannelById(VOICE) ?: return respond(event.channel, "There is no voice channel specified. Contact the host!")
         val remote = bot.musicModule.remote(event.guild, voice)
         val isMod = member.isOwner || member.roles.any { it.id == MOD }
 
@@ -50,7 +54,8 @@ class Skip : MusicCommand("skip") {
         if (!isMod)
             return respond(event.channel, "Only moderators are allowed to skip!")
 
-        val voice = member.voiceState.channel ?: return respond(event.channel, "You can only request something when you are in a voice channel")
+        val voice = member.voiceState.channel
+                ?: return respond(event.channel, "You can only request something when you are in a voice channel")
         val remote = bot.musicModule.remote(event.guild, voice)
 
         if (!remote.skipTrack())
@@ -66,18 +71,21 @@ class Skip : MusicCommand("skip") {
 open class MusicCommand(override val name: String) : AbstractCommand(name) {
     companion object {
 
-        @field:JvmField
+        @static
         val MOD = System.getProperty("role.mod") ?: "-1"
 
-        @field:JvmField
+        @static
         val CHANNEL = System.getProperty("channel.music") ?: "-1"
 
-        @field:JvmField
+        @static
+        val VOICE = System.getProperty("channel.music.voice") ?: "-1"
+
+        @static
         val RESTRICTED = System.getProperty("app.music.restrict")?.toBoolean() ?: true
     }
 
     override fun checkPermission(member: Member): Boolean {
-        return super.checkPermission(member) && member.voiceState?.inVoiceChannel() ?: false
+        return super.checkPermission(member) && member.voiceState?.channel?.id == VOICE
     }
 
     override fun checkIgnored(channel: TextChannel): Boolean {

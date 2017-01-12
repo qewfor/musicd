@@ -76,7 +76,7 @@ class Eval : AdminCommand("eval") {
 
 class Shutdown : AdminCommand("shutdown") {
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
-        FutureBot.LOG.info("Admin issued shutdown... (${event.author.id})")
+        FutureBot.LOG info "Admin issued shutdown... (${event.author.id})"
         event.jda.shutdownNow(true)
     }
 }
