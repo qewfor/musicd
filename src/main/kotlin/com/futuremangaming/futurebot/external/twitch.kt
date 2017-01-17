@@ -34,8 +34,10 @@ import java.awt.Color
 import java.net.URLEncoder
 import java.rmi.UnexpectedException
 import java.time.OffsetDateTime
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
+import kotlin.jvm.JvmField as static
 
 /**
  * @author Florian Spieß
@@ -47,22 +49,30 @@ val twitchColor: Color = Color.decode("#6441A4")
 class LiveListener : EventListener {
 
     companion object {
+        @static
         val TWITCH_LIVE_KEY = "twitch.live"
+        @static
         val TWITCH_USER_KEY = "twitch.user"
+        @static
         val TWITCH_CHANNEL_KEY = "twitch.channel"
+        @static
         val BOT_GUILD_KEY = "bot.guild"
+        @static
         val CHANNEL_LIVE_KEY = "channel.live"
-
+        @static
+        val LOG = getLogger("Twitch")
+        @static
+        val ZONE = ZoneId.of(System.getProperty("app.time.zoneid", "UTC"))
 
         var CHANNEL: String? = System.getProperty(CHANNEL_LIVE_KEY, "-1")
         var GUILD: String = System.getProperty(BOT_GUILD_KEY, "-1")
         var USER: String = System.getProperty(TWITCH_USER_KEY, "-1")
         var TWITCH_ID: String = System.getProperty(TWITCH_CHANNEL_KEY, "-1")
-        val LOG = getLogger("Twitch")
     }
 
     var api: JDA? = null
     var lock = Any()
+    var queryFailures: Int = 0
 
     override fun onEvent(event: Event?) {
         api = event!!.jda
@@ -81,8 +91,11 @@ class LiveListener : EventListener {
         }
     }
 
-    fun onStream(stream: MessageEmbed?) {
+    fun onStream(stream: MessageEmbed?, isQuery: Boolean = false) {
         if (live()) {
+            if (isQuery && queryFailures++ < 5)
+                return // We make sure that it is actually offline by making 5 failure checks
+
             if (stream === null) {
                 if (api?.presence?.game !== null)
                     api?.presence?.game = null
@@ -122,7 +135,7 @@ class LiveListener : EventListener {
                 val stream = stream()
                 val embed = embed(stream)
 
-                onStream(embed)
+                onStream(embed, isQuery = true)
             }
             catch (ex: UnirestException) {
                 LOG.debug(ExceptionUtils.getStackTrace(ex))
@@ -148,8 +161,8 @@ class LiveListener : EventListener {
     fun embed(map: Map<String, Any?>?): MessageEmbed? {
         if (map === null) return null
         val stream   = map["stream"]     as? Map<String, Any> ?: return null
-        val channel  = stream["channel"] as? Map<String, Any> ?: return null
-        val previews = stream["preview"] as? Map<String, Any> ?: return null
+        val channel  = stream["channel"] as? Map<String, Any> ?: throw IllegalArgumentException("Channel is null")
+        val previews = stream["preview"] as? Map<String, Any> ?: throw IllegalArgumentException("Previews is null")
 
         LiveListener.LOG internal stream.toString()
 
@@ -167,9 +180,9 @@ class LiveListener : EventListener {
         builder.setColor(twitchColor)
         builder.setImage("$preview?time=$time")
 
-        val dateTime = OffsetDateTime.parse(created_at ?: return builder.build())
+        val dateTime = OffsetDateTime.parse(created_at ?: return builder.build()).atZoneSameInstant(ZONE)
         builder.setTimestamp(dateTime)
-        if (dateTime.until(OffsetDateTime.now(), ChronoUnit.SECONDS) < 15)
+        if (dateTime.until(OffsetDateTime.now(ZONE), ChronoUnit.SECONDS) < 15)
             return builder.build() // twitch takes some time to create a preview image, if we are too fast we omit it
 
         var game = channel["game"] ?. toString() ?: return builder.build()
@@ -186,7 +199,7 @@ class LiveListener : EventListener {
         val twitchQuery = Thread {
             try {
                 while (!Thread.currentThread().isInterrupted) {
-                    TimeUnit.MINUTES.sleep(2)
+                    TimeUnit.MINUTES.sleep(1)
                     queryTwitch()
                 }
             }

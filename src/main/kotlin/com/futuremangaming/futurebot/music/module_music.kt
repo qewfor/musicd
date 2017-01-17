@@ -91,6 +91,7 @@ class PlayerRemote internal constructor(val player: AudioPlayer, val scheduler: 
 
     fun getRemainingTime(): Long {
         return getQueue()
+                .asSequence()
                 .map { it.duration }
                 .sum()
     }

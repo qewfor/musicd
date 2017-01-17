@@ -17,11 +17,11 @@
 package com.futuremangaming.futurebot
 
 import com.futuremangaming.futurebot.AnsiCode.Companion.ESC
-import com.futuremangaming.futurebot.LoggerTag.valueOf
 import com.futuremangaming.futurebot.external.LiveListener
 import com.futuremangaming.futurebot.internal.CommandManagement
 import com.futuremangaming.futurebot.internal.FutureEventManager
 import com.futuremangaming.futurebot.music.MusicModule
+import com.sedmelluq.discord.lavaplayer.jdaudp.NativeAudioSendFactory
 import net.dv8tion.jda.core.AccountType.BOT
 import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.JDABuilder
@@ -41,26 +41,7 @@ class FutureBot(token: String) {
 
     companion object {
         @field:JvmField
-        val LOG = getLogger("Application")
-
-        init {
-            val props = Properties()
-            val resource = this@Companion.javaClass.classLoader.getResourceAsStream("default.properties")
-            props.load(resource)
-            resource.close()
-
-            val sysProps = System.getProperties()
-            for ((key, value) in props) {
-                sysProps.putIfAbsent(key, value)
-            }
-
-            SimpleLog.LEVEL = SimpleLog.Level.OFF
-            SimpleLog.addListener(SimpleLogger())
-
-            LOG.level = valueOf(sysProps.getProperty("app.log.level", "info").toUpperCase())
-            LOG internal "Default properties: $props"
-            LOG internal "System properties: $sysProps"
-        }
+        val LOG = getLogger("FutureBot")
     }
 
     //val client: WebSocketClient = WebSocketClient(Config.fromJSON("database", File(PATH + "database.json")))
@@ -75,6 +56,7 @@ class FutureBot(token: String) {
                 .setEventManager(FutureEventManager(true))
                 .addListener(CommandManagement(this))
                 .addListener(LiveListener())
+                .setAudioSendFactory(NativeAudioSendFactory())
         //      .addListener(Chat())
                 .setAudioEnabled(true)
                 .buildAsync()
@@ -108,7 +90,25 @@ class Chat : ListenerAdapter() {
 
 }
 
+class Loader {
+    fun load() {
+        val props = Properties()
+        val resource = javaClass.classLoader.getResourceAsStream("default.properties")
+        props.load(resource)
+        resource.close()
+
+        val sysProps = System.getProperties()
+        for ((key, value) in props) {
+            sysProps.putIfAbsent(key, value)
+        }
+
+        SimpleLog.LEVEL = SimpleLog.Level.OFF
+        SimpleLog.addListener(SimpleLogger())
+    }
+}
+
 fun main(vararg args: String) {
+    Loader().load()
     val loginCfg: Config = Config.fromJSON("login", File(PATH + "login.json"))
     FutureBot(
         loginCfg["token"] as? String
