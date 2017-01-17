@@ -41,7 +41,6 @@ import java.time.temporal.ChronoField
 import java.time.temporal.TemporalAccessor
 import java.util.HashMap
 import java.util.regex.Pattern
-
 import kotlin.jvm.JvmField as static
 
 val loggers = HashMap<String, Logger>()
@@ -69,15 +68,15 @@ open class Logger internal constructor(internal val name: String) {
         val OUT: PrintStream = System.out
         @static
         val ERR: PrintStream = System.err
+        @static
+        val ZONE = ZoneId.of(System.getProperty("app.time.zoneid", "UTC"))
 
         fun stackTags(tags: List<LoggerTag>): String {
             return tags.joinToString(" ")
         }
 
-        fun timeStamp(): String =  timeStamp(OffsetDateTime.now())
-
-        fun timeStamp(temporal: TemporalAccessor): String {
-            val time = OffsetDateTime.from(temporal).atZoneSameInstant(ZoneId.systemDefault())
+        fun timeStamp(temporal: TemporalAccessor = OffsetDateTime.now()): String {
+            val time = OffsetDateTime.from(temporal).atZoneSameInstant(ZONE)
             val chronoHour = time[ChronoField.HOUR_OF_DAY]
             val chronoMin  = time[ChronoField.MINUTE_OF_HOUR]
             val chronoSec  = time[ChronoField.SECOND_OF_MINUTE]

@@ -37,12 +37,17 @@ targetCompatibility = 1.8
 repositories {
     jcenter() // for JDA / LavaPlayer
     mavenCentral() // for kotlin
+    maven {
+        name 'sedmelluq'
+        url 'http://maven.sedmelluq.com'
+    }
 }
 
 dependencies {
     //compile fileTree(dir: './libs', include: '*.jar')
     compile 'net.dv8tion:JDA:3.0.BETA2_118'
     compile 'com.sedmelluq:lavaplayer:1.1.37'
+    compile 'com.sedmelluq:jda-nas:1.0.3'
     compile 'net.sf.trove4j:trove4j:3.0.3'
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     //compile group: 'commons-io', name: 'commons-io', version: '2.5'
