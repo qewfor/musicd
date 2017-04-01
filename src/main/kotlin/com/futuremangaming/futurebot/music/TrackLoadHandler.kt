@@ -16,6 +16,7 @@
 
 package com.futuremangaming.futurebot.music
 
+import club.minnced.kjda.start
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist

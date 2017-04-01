@@ -17,27 +17,28 @@
 package com.futuremangaming.futurebot
 
 import org.json.JSONObject
-import java.io.File
-import java.util.HashMap
-
-val PATH = System.getProperty("user.dir") + "/config/"
-internal val configs: HashMap<String, Config> = hashMapOf()
-
-fun getConfig(name: String): Config =
-        configs.getOrPut(name) { Config() }
+import java.util.concurrent.atomic.AtomicInteger
+import javax.script.ScriptEngine
 
 /**
  * @author Florian Spieß
- * @since  2016-12-30
+ * @since  2017-01-07
  */
-class Config internal constructor(val map: HashMap<String, Any>) : MutableMap<String, Any> by map {
 
-    constructor() : this(HashMap())
-    constructor(json: JSONObject) : this(json.toMap() as HashMap<String, Any>)
+operator fun JSONObject.set(key: String, value: Any) {
+    put(key, value)
+}
 
-    companion object {
-        fun fromJSON(name: String, file: File): Config =
-                configs.getOrPut(name) { Config(JSONObject(file.readText())) }
-    }
+operator fun ScriptEngine.set(key: String, value: Any) {
+    put(key, value)
+}
 
+operator fun AtomicInteger.inc(): AtomicInteger {
+    this.andIncrement
+    return this
+}
+
+operator fun AtomicInteger.dec(): AtomicInteger {
+    this.andDecrement
+    return this
 }

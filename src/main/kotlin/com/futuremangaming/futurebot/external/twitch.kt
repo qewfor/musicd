@@ -16,11 +16,11 @@
 
 package com.futuremangaming.futurebot.external
 
+import club.minnced.kjda.builders.embed
 import com.futuremangaming.futurebot.getConfig
 import com.futuremangaming.futurebot.getLogger
 import com.mashape.unirest.http.Unirest
 import com.mashape.unirest.http.exceptions.UnirestException
-import net.dv8tion.jda.core.EmbedBuilder
 import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.entities.Game
 import net.dv8tion.jda.core.entities.Game.GameType.TWITCH
@@ -30,13 +30,12 @@ import net.dv8tion.jda.core.events.Event
 import net.dv8tion.jda.core.events.user.UserGameUpdateEvent
 import net.dv8tion.jda.core.hooks.EventListener
 import org.apache.commons.lang3.exception.ExceptionUtils
-import java.awt.Color
 import java.net.URLEncoder
 import java.rmi.UnexpectedException
 import java.time.OffsetDateTime
-import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 import kotlin.jvm.JvmField as static
 
 /**
@@ -44,7 +43,7 @@ import kotlin.jvm.JvmField as static
  * @since  2016-12-31
  */
 
-val twitchColor: Color = Color.decode("#6441A4")
+val twitchColor = Integer.decode("#6441A4")!!
 
 class LiveListener : EventListener {
 
@@ -61,8 +60,6 @@ class LiveListener : EventListener {
         val CHANNEL_LIVE_KEY = "channel.live"
         @static
         val LOG = getLogger("Twitch")
-        @static
-        val ZONE = ZoneId.of(System.getProperty("app.time.zoneid", "UTC"))
 
         var CHANNEL: String? = System.getProperty(CHANNEL_LIVE_KEY, "-1")
         var GUILD: String = System.getProperty(BOT_GUILD_KEY, "-1")
@@ -133,7 +130,7 @@ class LiveListener : EventListener {
         synchronized(lock) {
             try {
                 val stream = stream()
-                val embed = embed(stream)
+                val embed = createEmbed(stream)
 
                 onStream(embed, isQuery = true)
             }
@@ -158,7 +155,7 @@ class LiveListener : EventListener {
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun embed(map: Map<String, Any?>?): MessageEmbed? {
+    fun createEmbed(map: Map<String, Any?>?): MessageEmbed? {
         if (map === null) return null
         val stream   = map["stream"]     as? Map<String, Any> ?: return null
         val channel  = stream["channel"] as? Map<String, Any> ?: throw IllegalArgumentException("Channel is null")
@@ -172,31 +169,47 @@ class LiveListener : EventListener {
         val preview    = previews["large"]      ?. toString()
         val created_at = stream  ["created_at"] ?. toString()
 
-        val builder = EmbedBuilder()
-        builder.setUrl("https://twitch.tv/FuturemanGaming")
-        builder.setTitle("Futureman is live now!")
-        builder.setDescription("<:fmgSUP:219939370575069194> $status") // what should we do if that emote is changed/removed
-        builder.setAuthor("FuturemanGaming", "https://twitch.tv/FuturemanGaming/profile", logo)
-        builder.setColor(twitchColor)
-        builder.setImage("$preview?time=$time")
+        return embed {
+            title { "Futureman is live now!" }
+            url { "https://twitch.tv/FuturemanGaming" }
 
-        val dateTime = OffsetDateTime.parse(created_at ?: return builder.build()).atZoneSameInstant(ZONE)
-        builder.setTimestamp(dateTime)
-        if (dateTime.until(OffsetDateTime.now(ZONE), ChronoUnit.SECONDS) < 15)
-            return builder.build() // twitch takes some time to create a preview image, if we are too fast we omit it
+            description { "<:fmgSUP:219939370575069194> $status" }
 
-        var game = channel["game"] ?. toString() ?: return builder.build()
-        builder.addField("Directory", game, true)
+            author {
+                name = "FuturemanGaming"
+                url = "https://twitch.tv/FuturemanGaming"
+                icon = logo
+            }
 
-        game = URLEncoder.encode(game, "UTF-8").replace("+", "%20")
-        builder.setThumbnail("https://static-cdn.jtvnw.net/ttv-boxart/$game-138x190.jpg?time=$time")
-        return builder.build()
+            color { twitchColor }
+            image { "$preview?live=true" }
+
+            val dateTime = OffsetDateTime.parse(created_at ?: return@embed)
+
+            time { dateTime }
+            if (dateTime.until(OffsetDateTime.now(), ChronoUnit.SECONDS) < 15)
+                return@embed
+
+            var game = channel["game"] ?. toString() ?: return@embed
+
+            field {
+                name = "Directory"
+                value = game
+            }
+
+            game = URLEncoder.encode(game, "UTF-8").replace("+", "%20")
+
+            thumbnail { "https://static-cdn.jtvnw.net/ttv-boxart/$game-138x190.jpg?time=$time" }
+        }
+
     }
 
     fun live() = System.getProperty(TWITCH_LIVE_KEY, "false").toBoolean()
 
     init {
-        val twitchQuery = Thread {
+        val priority = (Thread.MAX_PRIORITY + Thread.NORM_PRIORITY) / 2
+
+        thread(name = "Twitch-API", isDaemon = true, priority = priority) {
             try {
                 while (!Thread.currentThread().isInterrupted) {
                     TimeUnit.MINUTES.sleep(1)
@@ -211,10 +224,6 @@ class LiveListener : EventListener {
             }
         }
 
-        twitchQuery.name = "Twitch-API"
-        twitchQuery.isDaemon = true
-        twitchQuery.priority = (Thread.MAX_PRIORITY + Thread.NORM_PRIORITY) / 2
-        twitchQuery.start()
     }
 
 

@@ -63,7 +63,7 @@ class Skip : MusicCommand("skip") {
 
         respond(event.channel, "${member.asMention} skipped current track!")
 
-        try { event.message.deleteMessage().queue() }
+        try { event.message.delete().queue() }
         catch (ex: PermissionException) { }
     }
 }

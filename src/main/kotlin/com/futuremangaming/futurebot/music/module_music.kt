@@ -16,27 +16,19 @@
 @file:JvmName("MusicModuleKt")
 package com.futuremangaming.futurebot.music
 
+import club.minnced.kjda.entities.sendTextAsync
 import com.futuremangaming.futurebot.getLogger
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter
-import com.sedmelluq.discord.lavaplayer.source.bandcamp.BandcampAudioSourceManager
-import com.sedmelluq.discord.lavaplayer.source.http.HttpAudioSourceManager
-import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceManager
-import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager
-import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
+import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason.CLEANUP
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason.STOPPED
 import gnu.trove.TDecorators
 import gnu.trove.map.hash.TLongObjectHashMap
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.Member
-import net.dv8tion.jda.core.entities.Message
-import net.dv8tion.jda.core.entities.MessageChannel
-import net.dv8tion.jda.core.entities.TextChannel
-import net.dv8tion.jda.core.entities.VoiceChannel
+import net.dv8tion.jda.core.entities.*
 import net.dv8tion.jda.core.exceptions.PermissionException
 import org.apache.commons.lang3.StringUtils
 import java.util.concurrent.BlockingQueue
@@ -52,13 +44,7 @@ private val PLAYER_MANAGER = DefaultAudioPlayerManager()
 class MusicModule {
 
     companion object {
-        init {
-            PLAYER_MANAGER.registerSourceManager(YoutubeAudioSourceManager())
-            PLAYER_MANAGER.registerSourceManager(SoundCloudAudioSourceManager())
-            PLAYER_MANAGER.registerSourceManager(TwitchStreamAudioSourceManager())
-            PLAYER_MANAGER.registerSourceManager(BandcampAudioSourceManager())
-            PLAYER_MANAGER.registerSourceManager(HttpAudioSourceManager())
-        }
+        init { AudioSourceManagers.registerRemoteSources(PLAYER_MANAGER) }
     }
 
     val manager: MusicManager = MusicManager()
@@ -114,11 +100,11 @@ class MusicManager {
 
     fun resetPlayer(guild: Guild) {
         getPlayer(guild).destroy()
-        schedulers.remove(players.remove(guild.id.toLong()))
+        schedulers.remove(players.remove(guild.idLong))
     }
 
     fun getPlayer(guild: Guild): AudioPlayer {
-        return players.getOrPut(guild.id.toLong()) {
+        return players.getOrPut(guild.idLong) {
             val player = PLAYER_MANAGER.createPlayer()
             val scheduler = schedulers.getOrPut(player, { TrackScheduler(player, guild, this@MusicManager) })
 
@@ -179,23 +165,23 @@ class TrackScheduler(val player: AudioPlayer, val guild: Guild, val manager: Mus
 }
 
 data class TrackRequest(
-        val manager: PlayerRemote,
-        val id: String,
-        val member: Member,
-        val channel: TextChannel,
-        val message: Message
+    val manager: PlayerRemote,
+    val id: String,
+    val member: Member,
+    val channel: TextChannel,
+    val message: Message
 )
 
 fun delete(message: Message) {
     try {
-        message.deleteMessage().queue()
+        message.delete().queue()
     }
     catch (ex: PermissionException) {}
 }
 
 fun send(channel: MessageChannel, msg: String) {
     try {
-        channel.sendMessage(msg).queue()
+        channel.sendTextAsync { msg } catch { }
     }
     catch (ex: PermissionException) { }
     catch (ex: Exception) {

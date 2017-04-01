@@ -16,6 +16,7 @@
 @file:JvmName("FutureBotKt")
 package com.futuremangaming.futurebot
 
+import club.minnced.kjda.*
 import com.futuremangaming.futurebot.AnsiCode.Companion.ESC
 import com.futuremangaming.futurebot.external.LiveListener
 import com.futuremangaming.futurebot.internal.CommandManagement
@@ -24,7 +25,6 @@ import com.futuremangaming.futurebot.music.MusicModule
 import com.sedmelluq.discord.lavaplayer.jdaudp.NativeAudioSendFactory
 import net.dv8tion.jda.core.AccountType.BOT
 import net.dv8tion.jda.core.JDA
-import net.dv8tion.jda.core.JDABuilder
 import net.dv8tion.jda.core.entities.ChannelType.TEXT
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
@@ -44,23 +44,17 @@ class FutureBot(token: String) {
         val LOG = getLogger("FutureBot")
     }
 
-    //val client: WebSocketClient = WebSocketClient(Config.fromJSON("database", File(PATH + "database.json")))
     val musicModule = MusicModule()
     var api: JDA? = null
         private set
 
-    fun connect() {
-        //client.connect {
-        api = JDABuilder(BOT)
-                .setToken(System.getProperty("bot.token"))
-                .setEventManager(FutureEventManager(true))
-                .addListener(CommandManagement(this))
-                .addListener(LiveListener())
-                .setAudioSendFactory(NativeAudioSendFactory())
-        //      .addListener(Chat())
-                .setAudioEnabled(true)
-                .buildAsync()
-        //}
+    fun connect() = client(BOT) {
+        token { System.getProperty("bot.token") }
+        manager { FutureEventManager(true) }
+        audioSendFactory { NativeAudioSendFactory() }
+
+        this += CommandManagement(this@FutureBot)
+        this += LiveListener()
     }
 
     init {
@@ -90,10 +84,10 @@ class Chat : ListenerAdapter() {
 
 }
 
-class Loader {
-    fun load() {
+class PropertyLoader {
+    fun load(name: String = "default.properties") {
         val props = Properties()
-        val resource = javaClass.classLoader.getResourceAsStream("default.properties")
+        val resource = javaClass.getResourceAsStream(name)
         props.load(resource)
         resource.close()
 
@@ -108,7 +102,7 @@ class Loader {
 }
 
 fun main(vararg args: String) {
-    Loader().load()
+    PropertyLoader().load()
     val loginCfg: Config = Config.fromJSON("login", File(PATH + "login.json"))
     FutureBot(
         loginCfg["token"] as? String

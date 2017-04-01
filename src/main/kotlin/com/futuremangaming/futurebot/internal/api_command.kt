@@ -16,6 +16,8 @@
 
 package com.futuremangaming.futurebot.internal
 
+import club.minnced.kjda.entities.div
+import club.minnced.kjda.entities.sendTextAsync
 import com.futuremangaming.futurebot.FutureBot
 import com.futuremangaming.futurebot.command.getAdmin
 import com.futuremangaming.futurebot.command.getStats
@@ -58,7 +60,7 @@ abstract class AbstractCommand(override val name: String, val response: String? 
 
     fun respond(channel: TextChannel, response: String) {
         try {
-            channel.sendMessage(response).queue()
+            channel.sendTextAsync { response } catch { }
         }
         catch (ex: PermissionException) {
             LOG.debug(ExceptionUtils.getStackTrace(ex))
@@ -97,7 +99,7 @@ class CommandManagement(val bot: FutureBot, val prefix: String = "!") : EventLis
 
         if (rawC.startsWith(prefix).not()) return
 
-        val args = rawC.split(Regex("\\s+"), 2)
+        val args = event.message / 2
         val name = args[0].substring(prefix.length).toLowerCase()
         val cArgs = if (args.size > 1) args[1] else ""
         commands.filter { name == it.name }
