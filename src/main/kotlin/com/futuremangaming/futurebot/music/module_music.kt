@@ -22,6 +22,7 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason.CLEANUP
@@ -166,6 +167,18 @@ class TrackScheduler(val player: AudioPlayer, val guild: Guild, val manager: Mus
             return destroy()
 
         nextTrack()
+    }
+
+    override fun onTrackStuck(player: AudioPlayer?, track: AudioTrack, thresholdMs: Long) {
+        getLogger("Music") error "Track got stuck [${track.info.title}]. Starting next..."
+        nextTrack(true)
+    }
+
+    override fun onTrackException(player: AudioPlayer?, track: AudioTrack?, exception: FriendlyException) {
+        val log = getLogger("Music")
+        log error "Encountered FriendlyException [${exception.severity}]"
+        log error exception.cause!!
+        destroy()
     }
 }
 
