@@ -36,7 +36,7 @@ configurations.all {
 
 task launch {
     doFirst { applicationDefaultJvmArgs = ["-Dbot.config=../config"] }
-    dependsOn run
+    doLast { run.exec() }
 }
 
 task wrapper(type: Wrapper) {
