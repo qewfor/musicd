@@ -35,7 +35,7 @@ configurations.all {
 }
 
 task launch {
-    applicationDefaultJvmArgs = ["-Dbot.config=../config"]
+    doFirst { applicationDefaultJvmArgs = ["-Dbot.config=../config"] }
     dependsOn run
 }
 
