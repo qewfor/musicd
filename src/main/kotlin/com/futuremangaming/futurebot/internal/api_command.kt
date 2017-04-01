@@ -86,7 +86,7 @@ abstract class AbstractCommand(override val name: String, val response: String? 
 class CommandManagement(val bot: FutureBot, val prefix: String = "!") : EventListener {
 
     private val commands: Set<Command> =
-                          getMusic() + // Music: Play, Skip
+                          getMusic() + // Music: Play, Skip, Queue, Shuffle
                           getStats() + // Stats: Ping, Uptime
                           getAdmin()   // Admin: Eval, Shutdown
 

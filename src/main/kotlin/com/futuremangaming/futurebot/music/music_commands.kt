@@ -16,22 +16,25 @@
 @file:JvmName("PlayCommand")
 package com.futuremangaming.futurebot.music
 
+import club.minnced.kjda.entities.sendEmbedAsync
 import com.futuremangaming.futurebot.FutureBot
+import com.futuremangaming.futurebot.command.timeFormat
 import com.futuremangaming.futurebot.internal.AbstractCommand
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.core.exceptions.PermissionException
-
+import java.util.Collections
+import java.util.concurrent.TimeUnit
 import kotlin.jvm.JvmField as static
 
-fun getMusic() = setOf(Play(), Skip())
+fun getMusic() = setOf(Play, Skip, Queue, Shuffle)
 
 /**
  * @author Florian Spieß
  * @since  2017-01-02
  */
-class Play : MusicCommand("play") {
+object Play : MusicCommand("play") {
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
         if (args.isBlank())
             return respond(event.channel, "Provide a link or id to a track resource!")
@@ -46,7 +49,7 @@ class Play : MusicCommand("play") {
     }
 }
 
-class Skip : MusicCommand("skip") {
+object Skip : MusicCommand("skip") {
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
         val member = event.member
         val isMod = member.isOwner || member.roles.any { it.id == MOD }
@@ -66,6 +69,87 @@ class Skip : MusicCommand("skip") {
         try { event.message.delete().queue() }
         catch (ex: PermissionException) { }
     }
+}
+
+object Shuffle : MusicCommand("shuffle") {
+
+    override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
+        val member = event.member
+        val isMod = member.isOwner || member.roles.any { it.id == MOD }
+
+        if (!isMod)
+            return respond(event.channel, "Only moderators are allowed to shuffle!")
+
+        val remote = bot.musicModule.remote(event.guild)
+        val queue = remote.scheduler.queue
+        val list = remote.queue.toList()
+
+        if (list.isEmpty())
+            return respond(event.channel, "There is nothing to shuffle!")
+
+        synchronized(queue) {
+            Collections.shuffle(list)
+            queue.clear()
+            queue += list
+        }
+
+        respond(event.channel, "The queue has been shuffled!")
+    }
+}
+
+object Queue : MusicCommand("queue") {
+
+    override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
+        val remote = bot.musicModule.remote(event.guild)
+        val queue = remote.queue.toList()
+
+        if (queue.isEmpty() && remote.voice == null)
+            return respond(event.channel, "There is currently no queue to display!")
+
+        event.channel.sendEmbedAsync {
+
+            footer {
+                text = "Remaining: ${timeFormat(remote.remainingTime).replace("**", "")}"
+            }
+
+            color { 0x50aace }
+
+            val track = remote.player.playingTrack
+            this += "Currently Playing: [`${timestamp(track.position)}`/`${timestamp(track.duration)}`] " +
+                    "**${track.info.title}**"
+
+            if (queue.isNotEmpty()) {
+                this += "\n\n"
+                val lines = mutableListOf<String>()
+
+                for (i in 0..4) {
+                    if (queue.size <= i) break
+                    val song = queue[i]
+                    val info = song.info
+                    lines += "`${i + 1}.` **${info.title}** " +
+                            "[`${if (info.isStream) "live" else timestamp(info.length)}`]"
+                }
+
+                this += lines.joinToString(separator = "\n")
+
+                if (queue.size > 5)
+                    this += "\n..."
+            }
+        }
+    }
+
+}
+
+fun timestamp(time: Long): String {
+    val u = TimeUnit.MILLISECONDS
+    val hours = u.toHours(time) % 24
+    val minutes = u.toMinutes(time) % 60
+    val seconds = u.toSeconds(time) % 60
+
+    if (u.toHours(time) > 0)
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+    else
+        return String.format("%02d:%02d", minutes, seconds)
 }
 
 open class MusicCommand(override val name: String) : AbstractCommand(name) {

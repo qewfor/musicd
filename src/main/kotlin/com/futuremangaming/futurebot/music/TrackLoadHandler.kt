@@ -16,7 +16,7 @@
 
 package com.futuremangaming.futurebot.music
 
-import club.minnced.kjda.start
+import club.minnced.kjda.then
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
@@ -30,12 +30,12 @@ class TrackLoadHandler(val trackRequest: TrackRequest) : AudioLoadResultHandler 
 
     var allowLive = false
     override fun noMatches() {
-        val (remote, id, member, channel) = trackRequest
+        val (_, id, member, channel) = trackRequest
         send(channel, "${member.asMention}, no tracks found for input `$id`!")
     }
 
     override fun loadFailed(exception: FriendlyException?) {
-        val (remote, id, member, channel) = trackRequest
+        val (_, id, member, channel) = trackRequest
         send(channel, "${member.asMention}, failed to load track for id `$id`!")
         LOG.log(exception!!)
     }
@@ -65,21 +65,26 @@ class TrackLoadHandler(val trackRequest: TrackRequest) : AudioLoadResultHandler 
     override fun playlistLoaded(playlist: AudioPlaylist?) {
         if (playlist === null) return
         val (remote, id, member, channel, message) = trackRequest
+
         if (playlist.isSearchResult) {
+
             val track = playlist.selectedTrack ?: playlist.tracks.firstOrNull()
             if (track !== null)
                 return trackLoaded(track)
             delete(message)
+
             return send(channel, "Unable to find anything for `${id.replaceFirst("ytsearch:", "")}`!")
         }
 
         delete(message)
-        channel.sendTyping().queue()
+        channel.sendTyping() then {
 
-        for (track in playlist.tracks)
-            remote.scheduler.enqueue(track)
+            for (track in playlist.tracks)
+                remote.scheduler.enqueue(track)
 
-        send(channel, "Loaded playlist with **${playlist.tracks?.size}** tracks! [Requested by ${member.asMention}]")
+            send(channel, "Loaded playlist with **${playlist.tracks?.size}** tracks! [Requested by ${member.asMention}]")
+
+        }
     }
 
 }

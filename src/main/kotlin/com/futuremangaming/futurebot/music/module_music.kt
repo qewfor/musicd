@@ -31,6 +31,7 @@ import gnu.trove.map.hash.TLongObjectHashMap
 import net.dv8tion.jda.core.entities.*
 import net.dv8tion.jda.core.exceptions.PermissionException
 import org.apache.commons.lang3.StringUtils
+import java.util.Queue
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 
@@ -49,10 +50,14 @@ class MusicModule {
 
     val manager: MusicManager = MusicManager()
 
-    fun remote(guild: Guild, voiceChannel: VoiceChannel): PlayerRemote {
+    fun remote(guild: Guild): PlayerRemote {
         val player = manager.getPlayer(guild)
         val queue = manager.getScheduler(guild)
-        val remote = PlayerRemote(player, queue)
+        return PlayerRemote(player, queue)
+    }
+
+    fun remote(guild: Guild, voiceChannel: VoiceChannel): PlayerRemote {
+        val remote = remote(guild)
         remote.voice = voiceChannel
         return remote
     }
@@ -66,20 +71,20 @@ class PlayerRemote internal constructor(val player: AudioPlayer, val scheduler: 
         get() = player.isPaused
         set(v) { player.isPaused = v }
 
+    val queue: Queue<AudioTrack> get() = scheduler.queue
+
+    val remainingTime: Long get() {
+        return queue
+                .asSequence()
+                .map { it.duration }
+                .sum()
+    }
+
     fun handleRequest(request: TrackRequest, allowLive: Boolean = false) {
         val handler = TrackLoadHandler(request)
         handler.allowLive = allowLive
 
         PLAYER_MANAGER.loadItemOrdered(this, request.id, handler)
-    }
-
-    fun getQueue() = scheduler.queue
-
-    fun getRemainingTime(): Long {
-        return getQueue()
-                .asSequence()
-                .map { it.duration }
-                .sum()
     }
 
     fun skipTrack() = scheduler.nextTrack(true)

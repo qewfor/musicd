@@ -26,10 +26,10 @@ import java.util.concurrent.TimeUnit
  * @author Florian Spieß
  * @since  2016-12-31
  */
-class Ping : AbstractCommand("ping", "pong")
-class Uptime : SupplierCommand("uptime", { uptime() })
+object Ping : AbstractCommand("ping", "pong")
+object Uptime : SupplierCommand("uptime", { timeFormat() })
 
-fun getStats() = setOf(Ping(), Uptime())
+fun getStats() = setOf(Ping, Uptime)
 
 open class SupplierCommand(override val name: String, val supply: () -> String) : AbstractCommand(name, null) {
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
@@ -37,8 +37,7 @@ open class SupplierCommand(override val name: String, val supply: () -> String) 
     }
 }
 
-fun uptime(): String {
-    val time = ManagementFactory.getRuntimeMXBean().uptime
+fun timeFormat(time: Long = ManagementFactory.getRuntimeMXBean().uptime): String {
     val unit = TimeUnit.MILLISECONDS
     val days = unit.toDays(time)
     val hours = unit.toHours(time) % 24

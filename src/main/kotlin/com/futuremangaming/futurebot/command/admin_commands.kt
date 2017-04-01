@@ -31,9 +31,9 @@ import javax.script.ScriptEngineManager
 
 val owner = "86699011792191488" // 86699011792191488
 
-fun getAdmin() = setOf<Command>(Eval(), Shutdown())
+fun getAdmin() = setOf<Command>(Eval, Shutdown)
 
-class Eval : AdminCommand("eval") {
+object Eval : AdminCommand("eval") {
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
         val engine = ScriptEngineManager().getEngineByName("nashorn")
         engine["event"] = event
@@ -74,7 +74,7 @@ class Eval : AdminCommand("eval") {
     operator fun GuildMessageReceivedEvent.component6() = this.message
 }
 
-class Shutdown : AdminCommand("shutdown") {
+object Shutdown : AdminCommand("shutdown") {
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
         FutureBot.LOG info "Admin issued shutdown... (${event.author.id})"
         event.jda.shutdown(true)
