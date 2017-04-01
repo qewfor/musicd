@@ -103,7 +103,7 @@ class PropertyLoader {
 
 fun main(vararg args: String) {
     PropertyLoader().load()
-    val loginCfg: Config = Config.fromJSON("login", File(PATH + "login.json"))
+    val loginCfg: Config = Config.fromJSON("login", File("../$PATH/login.json"))
     FutureBot(
         loginCfg["token"] as? String
                 ?: throw IllegalStateException("Missing token field in login.json!")
