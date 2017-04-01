@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 @file:JvmName("PlayCommand")
-package com.futuremangaming.futurebot.music
+package com.futuremangaming.futurebot.command
 
 import club.minnced.kjda.entities.sendEmbedAsync
 import com.futuremangaming.futurebot.FutureBot
-import com.futuremangaming.futurebot.command.timeFormat
 import com.futuremangaming.futurebot.internal.AbstractCommand
+import com.futuremangaming.futurebot.music.TrackRequest
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.core.exceptions.PermissionException
 import java.util.Collections
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import kotlin.jvm.JvmField as static
 
 fun getMusic() = setOf(Play, Skip, Queue, Shuffle)
@@ -40,7 +40,8 @@ object Play : MusicCommand("play") {
             return respond(event.channel, "Provide a link or id to a track resource!")
 
         val member = event.member
-        val voice = event.guild.getVoiceChannelById(VOICE) ?: return respond(event.channel, "There is no voice channel specified. Contact the host!")
+        val voice = event.guild.getVoiceChannelById(VOICE)
+                ?: return respond(event.channel, "There is no voice channel specified. Contact the host!")
         val remote = bot.musicModule.remote(event.guild, voice)
         val isMod = member.isOwner || member.roles.any { it.id == MOD }
 
@@ -138,10 +139,11 @@ object Queue : MusicCommand("queue") {
         }
     }
 
+    override fun checkPermission(member: Member): Boolean { return true }
 }
 
 fun timestamp(time: Long): String {
-    val u = TimeUnit.MILLISECONDS
+    val u = MILLISECONDS
     val hours = u.toHours(time) % 24
     val minutes = u.toMinutes(time) % 60
     val seconds = u.toSeconds(time) % 60
@@ -155,16 +157,16 @@ fun timestamp(time: Long): String {
 open class MusicCommand(override val name: String) : AbstractCommand(name) {
     companion object {
 
-        @static
+        @kotlin.jvm.JvmField
         val MOD = System.getProperty("role.mod") ?: "-1"
 
-        @static
+        @kotlin.jvm.JvmField
         val CHANNEL = System.getProperty("channel.music") ?: "-1"
 
-        @static
+        @kotlin.jvm.JvmField
         val VOICE = System.getProperty("channel.music.voice") ?: "-1"
 
-        @static
+        @kotlin.jvm.JvmField
         val RESTRICTED = System.getProperty("app.music.restrict")?.toBoolean() ?: true
     }
 
