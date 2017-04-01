@@ -34,6 +34,11 @@ configurations.all {
     resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 }
 
+task launch {
+    applicationDefaultJvmArgs = ["-Dbot.config=../config"]
+    dependsOn run
+}
+
 task wrapper(type: Wrapper) {
     gradleVersion = '3.4.1'
 }

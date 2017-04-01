@@ -20,7 +20,7 @@ import org.json.JSONObject
 import java.io.File
 import java.util.HashMap
 
-val PATH = System.getProperty("user.dir") + "/config/"
+val PATH = System.getProperty("bot.config") ?: "config/"
 internal val configs: HashMap<String, Config> = hashMapOf()
 
 fun getConfig(name: String): Config =
