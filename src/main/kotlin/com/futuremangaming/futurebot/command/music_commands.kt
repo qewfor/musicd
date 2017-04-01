@@ -110,7 +110,8 @@ object Queue : MusicCommand("queue") {
         event.channel.sendEmbedAsync {
 
             footer {
-                text = "Remaining: ${timeFormat(remote.remainingTime).replace("**", "")}"
+                value = "[${queue.size} Tracks] ${timeFormat(remote.remainingTime).replace("**", "")}"
+                icon = "https://i.imgur.com/6iSNidq.png"
             }
 
             color { 0x50aace }

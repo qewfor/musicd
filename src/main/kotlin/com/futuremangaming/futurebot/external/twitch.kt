@@ -176,7 +176,7 @@ class LiveListener : EventListener {
             description { "<:fmgSUP:219939370575069194> $status" }
 
             author {
-                name = "FuturemanGaming"
+                value = "FuturemanGaming"
                 url = "https://twitch.tv/FuturemanGaming"
                 icon = logo
             }
