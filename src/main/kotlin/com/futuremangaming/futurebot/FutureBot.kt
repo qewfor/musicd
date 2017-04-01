@@ -87,7 +87,7 @@ class Chat : ListenerAdapter() {
 class PropertyLoader {
     fun load(name: String = "default.properties") {
         val props = Properties()
-        val resource = javaClass.getResourceAsStream(name)
+        val resource = javaClass.classLoader.getResourceAsStream(name)
         props.load(resource)
         resource.close()
 
