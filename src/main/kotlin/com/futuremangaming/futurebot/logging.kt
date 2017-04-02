@@ -69,14 +69,18 @@ open class Logger internal constructor(internal val name: String) {
         @static
         val ERR: PrintStream = System.err
         @static
-        val ZONE = ZoneId.of(System.getProperty("app.time.zoneid", "UTC"))
+        val ZONE = { ZoneId.of(System.getProperty("app.time.zoneid", "UTC")) }
+        @static
+        val ANSI = { System.getProperty("app.log.ansi")?.toBoolean() ?: true }
 
         fun stackTags(tags: List<LoggerTag>): String {
-            return tags.joinToString(" ")
+            return tags
+                    .map { it.toString(ANSI()) }
+                    .joinToString(" ")
         }
 
         fun timeStamp(temporal: TemporalAccessor = OffsetDateTime.now()): String {
-            val time = OffsetDateTime.from(temporal).atZoneSameInstant(ZONE)
+            val time = OffsetDateTime.from(temporal).atZoneSameInstant(ZONE())
             val hour = time[ChronoField.HOUR_OF_DAY]
             val minute  = time[ChronoField.MINUTE_OF_HOUR]
             val second  = time[ChronoField.SECOND_OF_MINUTE]

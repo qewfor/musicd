@@ -19,6 +19,7 @@ package com.futuremangaming.futurebot
 import org.json.JSONObject
 import java.util.concurrent.atomic.AtomicInteger
 import javax.script.ScriptEngine
+import kotlin.experimental.inv
 
 /**
  * @author Florian Spieß
@@ -28,7 +29,6 @@ import javax.script.ScriptEngine
 operator fun JSONObject.set(key: String, value: Any) {
     put(key, value)
 }
-
 operator fun ScriptEngine.set(key: String, value: Any) {
     put(key, value)
 }
@@ -37,8 +37,12 @@ operator fun AtomicInteger.inc(): AtomicInteger {
     this.andIncrement
     return this
 }
-
 operator fun AtomicInteger.dec(): AtomicInteger {
     this.andDecrement
     return this
 }
+
+operator fun Int.not() = inv()
+operator fun Short.not() = inv()
+operator fun Long.not() = inv()
+operator fun Byte.not() = inv()
