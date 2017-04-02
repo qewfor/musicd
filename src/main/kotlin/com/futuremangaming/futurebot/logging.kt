@@ -77,14 +77,11 @@ open class Logger internal constructor(internal val name: String) {
 
         fun timeStamp(temporal: TemporalAccessor = OffsetDateTime.now()): String {
             val time = OffsetDateTime.from(temporal).atZoneSameInstant(ZONE)
-            val chronoHour = time[ChronoField.HOUR_OF_DAY]
-            val chronoMin  = time[ChronoField.MINUTE_OF_HOUR]
-            val chronoSec  = time[ChronoField.SECOND_OF_MINUTE]
-            val hour: Any   = if (chronoHour < 10) "0" + chronoHour else chronoHour
-            val minute: Any = if (chronoMin < 10)  "0" + chronoMin  else chronoMin
-            val second: Any = if (chronoSec < 10)  "0" + chronoSec  else chronoSec
+            val hour = time[ChronoField.HOUR_OF_DAY]
+            val minute  = time[ChronoField.MINUTE_OF_HOUR]
+            val second  = time[ChronoField.SECOND_OF_MINUTE]
 
-            return "$hour:$minute:$second"
+            return String.format("%02d:%02d:%02d", hour, minute, second)
         }
 
         inline fun lazy(out: PrintStream = OUT, message: () -> String): String? {
@@ -237,15 +234,15 @@ class AnsiCode {
 }
 
 class SimpleLogger : Logger("JDA"), SimpleLog.LogListener {
-    override fun onError(log: SimpleLog?, err: Throwable?) {
-        log(err!!)
+    override fun onError(log: SimpleLog?, err: Throwable) {
+        log(err)
     }
 
-    override fun onLog(log: SimpleLog?, logLevel: Level?, message: Any?) {
+    override fun onLog(log: SimpleLog, logLevel: Level, message: Any?) {
         log((
-            if (log!!.name == "JDA") ""
+            if (log.name == "JDA") ""
             else "(${cyanLight(log.name)}) ")
-               + message, LoggerTag.convert(logLevel!!)
+               + message, LoggerTag.convert(logLevel)
         )
     }
 }

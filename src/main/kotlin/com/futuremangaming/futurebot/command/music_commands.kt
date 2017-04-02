@@ -103,7 +103,7 @@ object Queue : MusicCommand("queue") {
         event.channel.sendEmbedAsync {
             color { 0x50aace }
 
-            this += "Currently Playing: [`${timestamp(track.position)}`/`${timestamp(track.duration)}`] " +
+            this += "Playing: [`${timestamp(track.position)}`/`${timestamp(track.duration)}`] " +
                     "**${track.info.title}**"
 
             if (queue.isNotEmpty()) {

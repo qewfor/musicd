@@ -21,6 +21,7 @@ import club.minnced.kjda.entities.sendTextAsync
 import com.futuremangaming.futurebot.FutureBot
 import com.futuremangaming.futurebot.command.getAdmin
 import com.futuremangaming.futurebot.command.getMusic
+import com.futuremangaming.futurebot.command.getSocial
 import com.futuremangaming.futurebot.command.getStats
 import com.futuremangaming.futurebot.getLogger
 import net.dv8tion.jda.core.entities.Member
@@ -86,9 +87,10 @@ abstract class AbstractCommand(override val name: String, val response: String? 
 class CommandManagement(val bot: FutureBot, val prefix: String = "!") : EventListener {
 
     private val commands: Set<Command> =
-                          getMusic() + // Music: Play, Skip, Queue, Shuffle
-                          getStats() + // Stats: Ping, Uptime
-                          getAdmin()   // Admin: Eval, Shutdown
+                          getMusic()  + // Music : Play, Skip, Queue, Shuffle
+                          getStats()  + // Stats : Ping, Uptime
+                          getAdmin()  + // Admin : Eval, Shutdown
+                          getSocial()   // Social: Merch, Twitter, Youtube, Twitch
 
     fun onMessage(event: GuildMessageReceivedEvent) {
         if (event.author.isBot) return
