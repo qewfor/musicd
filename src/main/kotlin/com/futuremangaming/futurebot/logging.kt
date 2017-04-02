@@ -40,12 +40,11 @@ import java.time.ZoneId
 import java.time.temporal.ChronoField
 import java.time.temporal.TemporalAccessor
 import java.util.HashMap
-import java.util.regex.Pattern
 import kotlin.jvm.JvmField as static
 
 val loggers = HashMap<String, Logger>()
 val printLock = Any()
-val newLine = Pattern.compile("\n\r?")!!
+val newLine = Regex("\n\r?")
 
 fun getLogger(name: String): Logger =
     loggers.getOrPut(name) { Logger(name) }
@@ -88,14 +87,12 @@ open class Logger internal constructor(internal val name: String) {
             return String.format("%02d:%02d:%02d", hour, minute, second)
         }
 
-        inline fun lazy(out: PrintStream = OUT, message: () -> String): String? {
-            synchronized(printLock) {
-                val print = message()
-                if (print.isBlank()) return null
+        inline fun lazy(out: PrintStream = OUT, message: () -> String): String? = synchronized(printLock) {
+            val print = message()
+            if (print.isBlank()) return null
 
-                out.println(print)
-                return print
-            }
+            out.println(print)
+            return print
         }
     }
 
@@ -104,32 +101,35 @@ open class Logger internal constructor(internal val name: String) {
             return null
         if (leveled && tags.none { it.ordinal <= level.ordinal })
             return null
-        tags.sortBy { it.ordinal }
 
-        val listTags = tags.distinct().filter { it !== OFF }
+        val listTags = tags.distinct().sortedBy { it.ordinal } .filter { it !== OFF }
         val head = "[${timeStamp()}] [$name] ${stackTags(listTags)} "
         val stream = if (error) err else out
+        val content = message.trim().replace(newLine, System.lineSeparator() + head)
 
-        return lazy(stream) { "$head${newLine.matcher(message.trim()).replaceAll(System.lineSeparator() + head)}" }
+        return lazy(stream) { "$head$content" }
     }
 
-    fun log(message: Any, vararg tags: LoggerTag): String? = log(message.toString(), false, *tags)
+    fun log(message: Any, vararg tags: LoggerTag): String?
+            = log(convert(message), false, *tags)
 
-    infix fun log(message: Throwable): String?   = log(ExceptionUtils.getStackTrace(message))
-    infix fun trace(message: Any): String?       = log(message, TRACE)
-    infix fun internal(message: Any): String?    = log(message, INTERNAL)
-    infix fun debug(message: Any): String?       = log(message, DEBUG)
-    infix fun info(message: Any): String?        = log(message, INFO)
-    infix fun warn(message: Any): String?        = log(message, TRACE)
-    infix fun error(message: Any): String?       = log(message.toString(), true, ERROR)
-    infix fun error(message: Throwable): String? = log(ExceptionUtils.getStackTrace(message), true, ERROR)
-    infix fun log(message: Any): String?         = info(message)
+    infix fun trace(message: Any): String?     = log(message, TRACE)
+    infix fun internal(message: Any): String?  = log(message, INTERNAL)
+    infix fun debug(message: Any): String?     = log(message, DEBUG)
+    infix fun info(message: Any): String?      = log(message, INFO)
+    infix fun warn(message: Any): String?      = log(message, TRACE)
+    infix fun error(message: Any): String?     = log(convert(message), true, ERROR)
+    infix fun log(message: Any): String?       = info(message)
 
     fun clean(err: Boolean = false) {
         lazy(out) { CLEAN }
 
         if (err) lazy(err) { CLEAN }
     }
+
+    private fun convert(message: Any) =
+        if (message is Throwable) ExceptionUtils.getStackTrace(message)
+        else message.toString()
 
     //////////////////////////////////
     /// Modifier

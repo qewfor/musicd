@@ -34,10 +34,10 @@ class TrackLoadHandler(val trackRequest: TrackRequest) : AudioLoadResultHandler 
         send(channel, "${member.asMention}, no tracks found for input `$id`!")
     }
 
-    override fun loadFailed(exception: FriendlyException?) {
+    override fun loadFailed(exception: FriendlyException) {
         val (_, id, member, channel) = trackRequest
-        send(channel, "${member.asMention}, failed to load track for id `$id`!")
-        LOG.log(exception!!)
+        send(channel, "${member.asMention}, failed to load track for id `$id`!\n```\n${exception.message}\n```")
+        LOG error exception
     }
 
     override fun trackLoaded(track: AudioTrack?) {
