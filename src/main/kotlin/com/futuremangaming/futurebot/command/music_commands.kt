@@ -16,6 +16,7 @@
 @file:JvmName("PlayCommand")
 package com.futuremangaming.futurebot.command
 
+import club.minnced.kjda.entities.connectedChannel
 import club.minnced.kjda.entities.sendEmbedAsync
 import com.futuremangaming.futurebot.FutureBot
 import com.futuremangaming.futurebot.internal.AbstractCommand
@@ -40,10 +41,11 @@ object Play : MusicCommand("play") {
             return respond(event.channel, "Provide a link or id to a track resource!")
 
         val member = event.member
-        val voice = event.guild.getVoiceChannelById(VOICE)
+        val voice = event.guild.getVoiceChannelById(VOICE())
+                ?: event.member.connectedChannel
                 ?: return respond(event.channel, "There is no voice channel specified. Contact the host!")
         val remote = bot.musicModule.remote(event.guild, voice)
-        val isMod = member.isOwner || member.roles.any { it.id == MOD }
+        val isMod = member.isOwner || member.roles.any { it.id == MOD() }
 
         val identifier = if (args.startsWith("http")) args else "ytsearch:$args"
         remote.handleRequest(TrackRequest(remote, identifier, member, event.channel, event.message), isMod)
@@ -53,7 +55,7 @@ object Play : MusicCommand("play") {
 object Skip : MusicCommand("skip") {
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
         val member = event.member
-        val isMod = member.isOwner || member.roles.any { it.id == MOD }
+        val isMod = member.isOwner || member.roles.any { it.id == MOD() }
 
         if (!isMod)
             return respond(event.channel, "Only moderators are allowed to skip!")
@@ -76,7 +78,7 @@ object Shuffle : MusicCommand("shuffle") {
 
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
         val member = event.member
-        val isMod = member.isOwner || member.roles.any { it.id == MOD }
+        val isMod = member.isOwner || member.roles.any { it.id == MOD() }
 
         if (!isMod)
             return respond(event.channel, "Only moderators are allowed to shuffle!")
@@ -159,24 +161,24 @@ open class MusicCommand(override val name: String) : AbstractCommand(name) {
     companion object {
 
         @kotlin.jvm.JvmField
-        val MOD = System.getProperty("role.mod") ?: "-1"
+        val MOD = { System.getProperty("role.mod") ?: "-1" }
 
         @kotlin.jvm.JvmField
-        val CHANNEL = System.getProperty("channel.music") ?: "-1"
+        val CHANNEL = { System.getProperty("channel.music") ?: "-1" }
 
         @kotlin.jvm.JvmField
-        val VOICE = System.getProperty("channel.music.voice") ?: "-1"
+        val VOICE = { System.getProperty("channel.music.voice") ?: "-1" }
 
         @kotlin.jvm.JvmField
-        val RESTRICTED = System.getProperty("app.music.restrict")?.toBoolean() ?: true
+        val RESTRICTED = { System.getProperty("app.music.restrict")?.toBoolean() ?: true }
     }
 
     override fun checkPermission(member: Member): Boolean {
-        return super.checkPermission(member) && member.voiceState?.channel?.id == VOICE
+        return super.checkPermission(member) && (!RESTRICTED() || member.voiceState?.channel?.id == VOICE())
     }
 
     override fun checkIgnored(channel: TextChannel): Boolean {
-        return RESTRICTED && channel.id != CHANNEL
+        return RESTRICTED() && channel.id != CHANNEL()
     }
 
 }

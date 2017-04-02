@@ -27,12 +27,14 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.FAULT
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason.CLEANUP
+import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason.REPLACED
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason.STOPPED
 import gnu.trove.TDecorators
 import gnu.trove.map.hash.TLongObjectHashMap
 import net.dv8tion.jda.core.entities.*
 import net.dv8tion.jda.core.exceptions.PermissionException
 import org.apache.commons.lang3.StringUtils
+import java.util.Collections
 import java.util.Queue
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
@@ -91,6 +93,15 @@ class PlayerRemote internal constructor(val player: AudioPlayer, val scheduler: 
 
     fun skipTrack() = scheduler.nextTrack(true)
 
+    fun shuffle() {
+
+        val queue = queue.toList()
+
+        Collections.shuffle(queue)
+
+
+    }
+
     fun removeByName(name: String): Boolean = scheduler.queue.removeAll {
         StringUtils.containsIgnoreCase(it.info.title, name)
     }
@@ -117,8 +128,8 @@ class MusicManager {
 
             guild.audioManager.sendingHandler = PlayerSendHandler(player)
             player.addListener(scheduler)
-            player.volume = 35
-            player
+            player.volume = 75
+            return@getOrPut player
         }
     }
 
@@ -148,7 +159,7 @@ class TrackScheduler(val player: AudioPlayer, val guild: Guild, val manager: Mus
             val track = queue.poll()
             if (player.startTrack(track, !skip))
                 return true
-            if (player.playingTrack !== null)
+            if (player.playingTrack == track)
                 return true
             getLogger("Music") warn "Track ${track.info.title} could not be played!"
         }
@@ -171,7 +182,8 @@ class TrackScheduler(val player: AudioPlayer, val guild: Guild, val manager: Mus
         if (endReason === STOPPED || endReason === CLEANUP)
             return destroy()
 
-        nextTrack()
+        if (endReason !== REPLACED)
+            nextTrack()
     }
 
     override fun onTrackStuck(player: AudioPlayer?, track: AudioTrack, thresholdMs: Long) {
