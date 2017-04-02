@@ -133,13 +133,13 @@ class LiveListener : EventListener {
             onStream(embed, isQuery = true)
         }
         catch (ex: UnirestException) {
-            LOG.debug(ExceptionUtils.getStackTrace(ex))
+            LOG.debug(ex)
         }
     }
 
     fun stream(): Map<String, Any?>? {
         val client: String = (getConfig("login")["twitch_key"] as? String) ?: return null
-        val response = Unirest.get("https://api.twitch.tv/kraken/streams/$TWITCH_ID") // `65311054` is futureman's twitch id
+        val response = Unirest.get("https://api.twitch.tv/kraken/streams/${TWITCH_ID()}") // `65311054` is futureman's twitch id
                 .header("accept", "application/vnd.twitchtv.v5+json")
                 .header("client-id", client)
                 .asJson()
