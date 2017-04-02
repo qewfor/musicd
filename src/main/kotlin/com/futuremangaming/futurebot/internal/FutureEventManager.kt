@@ -75,5 +75,5 @@ class FutureEventManager(val async: Boolean) : IEventManager {
 
 internal class Factory : ThreadFactory {
     override fun newThread(r: Runnable)
-        = thread (name = "EventThread", isDaemon = true) { r.run() }
+        = thread (start = false, name = "EventThread", isDaemon = true) { r.run() }
 }
