@@ -17,6 +17,7 @@
 package com.futuremangaming.futurebot.external
 
 import club.minnced.kjda.builders.embed
+import club.minnced.kjda.then
 import com.futuremangaming.futurebot.getConfig
 import com.futuremangaming.futurebot.getLogger
 import com.mashape.unirest.http.Unirest
@@ -43,7 +44,7 @@ import kotlin.jvm.JvmField as static
  * @since  2016-12-31
  */
 
-val twitchColor = Integer.decode("#6441A4")!!
+val TWITCH_COLOR = 0x6441A4
 
 class LiveListener : EventListener {
 
@@ -61,30 +62,28 @@ class LiveListener : EventListener {
         @static
         val LOG = getLogger("Twitch")
 
-        var CHANNEL: String? = System.getProperty(CHANNEL_LIVE_KEY, "-1")
-        var GUILD: String = System.getProperty(BOT_GUILD_KEY, "-1")
-        var USER: String = System.getProperty(TWITCH_USER_KEY, "-1")
-        var TWITCH_ID: String = System.getProperty(TWITCH_CHANNEL_KEY, "-1")
+        val CHANNEL = { System.getProperty(CHANNEL_LIVE_KEY, "-1") }
+        val GUILD = { System.getProperty(BOT_GUILD_KEY, "-1") }
+        val USER = { System.getProperty(TWITCH_USER_KEY, "-1") }
+        val TWITCH_ID = { System.getProperty(TWITCH_CHANNEL_KEY, "-1") }
     }
 
     var api: JDA? = null
-    var lock = Any()
+    val lock = Any()
     var queryFailures: Int = 0
 
-    override fun onEvent(event: Event?) {
-        api = event!!.jda
-        if (event is UserGameUpdateEvent) {
-            synchronized(lock) {
-                val user = event.user
-                val member = event.guild.getMember(user)
-                if (user.id != USER)
-                    return
+    override fun onEvent(event: Event) {
+        api = event.jda
+        if (event is UserGameUpdateEvent) synchronized(lock) {
+            val user = event.user
+            val member = event.guild.getMember(user)
+            if (user.id != USER())
+                return
 
-                if (member.game?.type === TWITCH)
-                    queryTwitch() // did we start? faster than automated query
-                else if (event.previousGame?.type === TWITCH)
-                    queryTwitch() // did we stop?
-            }
+            if (member.game?.type === TWITCH)
+                queryTwitch() // did we start? faster than automated query
+            else if (event.previousGame?.type === TWITCH)
+                queryTwitch() // did we stop?
         }
     }
 
@@ -100,14 +99,14 @@ class LiveListener : EventListener {
             }
         }
         else if (stream !== null){
-            val guild = api?.getGuildById(GUILD)
-            val game = guild?.getMemberById(USER)?.game
+            val guild = api?.getGuildById(GUILD())
+            val game = guild?.getMemberById(USER())?.game
             if (api?.presence?.game === null && game !== null && game.type === TWITCH)
                 api?.presence?.game = game
             else
                 api?.presence?.game = Game.of(stream.fields.firstOrNull()?.value ?: "Futureman is live!", stream.url)
             announce(
-                api?.getTextChannelById(CHANNEL)
+                api?.getTextChannelById(CHANNEL())
                    ?: guild?.publicChannel
                    ?: throw UnexpectedException("No announcement channel found"),
                 stream
@@ -119,24 +118,22 @@ class LiveListener : EventListener {
     fun announce(channel: TextChannel, stream: MessageEmbed) {
         if (live()) return
         try {
-            channel.sendMessage(stream).queue { System.setProperty(TWITCH_LIVE_KEY, "true") }
+            channel.sendMessage(stream) then { System.setProperty(TWITCH_LIVE_KEY, "true") }
         }
         catch (ex: Exception) {
             LOG.log(ex)
         }
     }
 
-    fun queryTwitch() {
-        synchronized(lock) {
-            try {
-                val stream = stream()
-                val embed = createEmbed(stream)
+    fun queryTwitch(): Unit = synchronized(lock) {
+        try {
+            val stream = stream()
+            val embed = createEmbed(stream)
 
-                onStream(embed, isQuery = true)
-            }
-            catch (ex: UnirestException) {
-                LOG.debug(ExceptionUtils.getStackTrace(ex))
-            }
+            onStream(embed, isQuery = true)
+        }
+        catch (ex: UnirestException) {
+            LOG.debug(ExceptionUtils.getStackTrace(ex))
         }
     }
 
@@ -181,7 +178,7 @@ class LiveListener : EventListener {
                 icon = logo
             }
 
-            color { twitchColor }
+            color { TWITCH_COLOR }
             image { "$preview?live=true" }
 
             val dateTime = OffsetDateTime.parse(created_at ?: return@embed)
