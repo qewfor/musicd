@@ -159,8 +159,6 @@ class TrackScheduler(val player: AudioPlayer, val guild: Guild, val manager: Mus
             val track = queue.poll()
             if (player.startTrack(track, !skip))
                 return true
-            if (player.playingTrack == track)
-                return true
             getLogger("Music") warn "Track ${track.info.title} could not be played!"
         }
 
@@ -195,10 +193,9 @@ class TrackScheduler(val player: AudioPlayer, val guild: Guild, val manager: Mus
         val log = getLogger("Music")
         log error "Encountered FriendlyException [${exception.severity}]"
 
-        if (exception.severity === FAULT) {
-            exception.printStackTrace()
-            destroy()
-        }
+        nextTrack(true)
+
+        if (exception.severity === FAULT) { exception.printStackTrace() }
     }
 }
 
