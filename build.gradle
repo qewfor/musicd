@@ -37,6 +37,8 @@ configurations.all {
 task launch {
     doFirst { applicationDefaultJvmArgs = ["-Dbot.config=../config"] }
     doLast { run.exec() }
+
+    dependsOn compileKotlin
 }
 
 task wrapper(type: Wrapper) {
