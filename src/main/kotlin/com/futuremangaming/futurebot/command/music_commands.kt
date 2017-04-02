@@ -96,7 +96,7 @@ object Queue : MusicCommand("queue") {
         val queue = remote.queue.toList()
         val track = remote.player.playingTrack
 
-        if ((queue.isEmpty() || track === null)
+        if ((queue.isEmpty() && track === null)
                 && remote.voice == null)
             return respond(event.channel, "There is currently no queue to display!")
 
