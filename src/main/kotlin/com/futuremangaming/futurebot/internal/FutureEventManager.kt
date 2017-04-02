@@ -22,13 +22,9 @@ import net.dv8tion.jda.core.hooks.EventListener
 import net.dv8tion.jda.core.hooks.IEventManager
 import java.lang.Thread.NORM_PRIORITY
 import java.util.LinkedList
-import java.util.concurrent.BlockingQueue
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.ThreadFactory
+import java.util.concurrent.*
 import java.util.concurrent.TimeUnit.MINUTES
+import kotlin.concurrent.thread
 
 /**
  * @author Florian Spieß
@@ -36,7 +32,7 @@ import java.util.concurrent.TimeUnit.MINUTES
  */
 class FutureEventManager(val async: Boolean) : IEventManager {
 
-    private var listeners: MutableSet<EventListener> = ConcurrentHashMap.newKeySet()
+    private val listeners: MutableSet<EventListener> = ConcurrentHashMap.newKeySet()
     val eventQueue: BlockingQueue<Event> = LinkedBlockingQueue()
     val pool: ExecutorService?
 
@@ -47,18 +43,17 @@ class FutureEventManager(val async: Boolean) : IEventManager {
     }
 
     override fun register(listener: Any?) {
-        listeners.add(listener as? EventListener ?: throw IllegalArgumentException())
+        listeners += (listener as? EventListener ?: throw IllegalArgumentException())
     }
 
     override fun unregister(listener: Any?) {
-        listeners.add(listener as? EventListener ?: throw IllegalArgumentException())
+        listeners += (listener as? EventListener ?: throw IllegalArgumentException())
     }
 
     init {
-        val thread: Thread
         if (async) pool = Executors.newCachedThreadPool(Factory())
         else pool = null
-        thread = Thread {
+        thread(name = "EventManger-mW", isDaemon = true, priority = NORM_PRIORITY) {
             while (!Thread.currentThread().isInterrupted) {
                 val event = eventQueue.take()
                 val r = Runnable {
@@ -75,18 +70,10 @@ class FutureEventManager(val async: Boolean) : IEventManager {
             }
             pool?.awaitTermination(1, MINUTES)
         }
-        thread.name = "EventManager-mW"
-        thread.isDaemon = true
-        thread.priority = NORM_PRIORITY
-        thread.start()
     }
 }
 
 internal class Factory : ThreadFactory {
-    override fun newThread(r: Runnable): Thread {
-        val thread = Thread(r)
-        thread.name = "EventThread"
-        thread.isDaemon = true
-        return thread
-    }
+    override fun newThread(r: Runnable)
+        = thread (name = "EventThread", isDaemon = true) { r.run() }
 }
