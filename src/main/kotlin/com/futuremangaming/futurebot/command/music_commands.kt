@@ -25,7 +25,6 @@ import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.core.exceptions.PermissionException
-import java.util.Collections
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import kotlin.jvm.JvmField as static
 
@@ -84,17 +83,7 @@ object Shuffle : MusicCommand("shuffle") {
             return respond(event.channel, "Only moderators are allowed to shuffle!")
 
         val remote = bot.musicModule.remote(event.guild)
-        val queue = remote.scheduler.queue
-        val list = remote.queue.toList()
-
-        if (list.isEmpty())
-            return respond(event.channel, "There is nothing to shuffle!")
-
-        synchronized(queue) {
-            Collections.shuffle(list)
-            queue.clear()
-            queue += list
-        }
+        remote.shuffle()
 
         respond(event.channel, "The queue has been shuffled!")
     }
@@ -105,24 +94,25 @@ object Queue : MusicCommand("queue") {
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
         val remote = bot.musicModule.remote(event.guild)
         val queue = remote.queue.toList()
+        val track = remote.player.playingTrack
 
-        if (queue.isEmpty() && remote.voice == null)
+        if ((queue.isEmpty() || track === null)
+                && remote.voice == null)
             return respond(event.channel, "There is currently no queue to display!")
 
         event.channel.sendEmbedAsync {
-
-            footer {
-                value = "[${queue.size} Tracks] ${timeFormat(remote.remainingTime).replace("**", "")}"
-                icon = "https://i.imgur.com/6iSNidq.png"
-            }
-
             color { 0x50aace }
 
-            val track = remote.player.playingTrack
             this += "Currently Playing: [`${timestamp(track.position)}`/`${timestamp(track.duration)}`] " +
                     "**${track.info.title}**"
 
             if (queue.isNotEmpty()) {
+
+                footer {
+                    value = "[${queue.size} Tracks] ${timeFormat(remote.remainingTime).replace("**", "")}"
+                    icon = "https://i.imgur.com/6iSNidq.png"
+                }
+
                 this += "\n\n"
                 val lines = mutableListOf<String>()
 

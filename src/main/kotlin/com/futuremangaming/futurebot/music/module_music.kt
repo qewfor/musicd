@@ -99,7 +99,7 @@ class PlayerRemote internal constructor(val player: AudioPlayer, val scheduler: 
 
         Collections.shuffle(queue)
 
-
+        scheduler.queue = LinkedBlockingQueue(queue)
     }
 
     fun removeByName(name: String): Boolean = scheduler.queue.removeAll {
@@ -139,7 +139,7 @@ class MusicManager {
 
 class TrackScheduler(val player: AudioPlayer, val guild: Guild, val manager: MusicManager) : AudioEventAdapter() { // copied from demo
 
-    val queue: BlockingQueue<AudioTrack> = LinkedBlockingQueue()
+    internal var queue: BlockingQueue<AudioTrack> = LinkedBlockingQueue()
     internal var voice: VoiceChannel? = null
 
     infix fun enqueue(track: AudioTrack): Boolean {
