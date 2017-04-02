@@ -149,17 +149,9 @@ fun timestamp(time: Long): String {
 
 open class MusicCommand(override val name: String) : AbstractCommand(name) {
     companion object {
-
-        @kotlin.jvm.JvmField
-        val MOD = { System.getProperty("role.mod") ?: "-1" }
-
-        @kotlin.jvm.JvmField
-        val CHANNEL = { System.getProperty("channel.music") ?: "-1" }
-
-        @kotlin.jvm.JvmField
-        val VOICE = { System.getProperty("channel.music.voice") ?: "-1" }
-
-        @kotlin.jvm.JvmField
+        val MOD        = { System.getProperty("role.mod") ?: "-1" }
+        val CHANNEL    = { System.getProperty("channel.music") ?: "-1" }
+        val VOICE      = { System.getProperty("channel.music.voice") ?: "-1" }
         val RESTRICTED = { System.getProperty("app.music.restrict")?.toBoolean() ?: true }
     }
 

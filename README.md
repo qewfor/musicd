@@ -5,8 +5,6 @@ FutureBot-Discord
 
 Discord Bot (to be) used in the official FuturemanGaming discord server!
 Written in [DV8FromTheWorld/JDA](https://github.com/DV8FromTheWorld/JDA) with possible slight modifications.
-This Bot should use [PhantomBot](https://github.com/PhantomBot/PhantomBot) to retrieve all of its custom commands
-that can be created/edited/deleted via the native web panel. The API connection is established through a WebSocketClient.
 
 The music is module is powered by [LavaPlayer](https://github.com/sedmelluq/lavaplayer)
 
@@ -19,45 +17,31 @@ which can be found in [build.gradle](/build.gradle).
 
 Firstly make sure to use the gradle version this was built in
 
-Update gradle: `gradlew wrapper` 
+> Update gradle: `gradlew wrapper` 
 
 
 Secondly run the build task (shadowJar)
  
-Run: `gradlew clean shadowJar`
-
-## Usage
-
-See build before reading this section, make sure you are using the latest version
-
-### Windows
-
-Using [start.bat](/start.bat) will run the provided application jar. 
-Modify the `%loc%` variable with the path to the application jar
-The `%live%` variable decides whether the bot should announce that futureman is currently live or not, if this is true it
-will check if futureman is live and announce it on startup, else it will treat it as offline
- 
-### Linux
-
-Using [start.sh](/start.sh) will run the provided application jar.
-Modify the `$loc` variable with the path to the application jar
-The `$live` variable decides whether the bot should announce that futureman is currently live or not, if this is true it
-will check if futureman is live and announce it on startup, else it will treat it as offline
+> Run: `gradlew run`
 
 ## Requirements
 
-Kotlin v1.0.6
+Kotlin v1.1.1
 
-Gradle v3.2.1
+Gradle v3.4.2
 
 
 ### Dependencies
 
 All of the listed dependencies should include the transitive dependencies. (e.g. JDA comes with org.json)
 
-- Kotlin v1.0.6
+- [Kotlin stdlib-jre8](https://github.com/JetBrains/Kotlin)
     created by [JetBrains](https://github.com/JetBrains)
-- JDA v3.0.BETA2
+- [JDA v3.0.0](https://github.com/DV8FromTheWorld/JDA)
     created by [DV8FromTheWorld](https://github.com/DV8FromTheWorld)
-- LavaPlayer v1.1.36+
+- [Kotlin-JDA](https://github.com/JDA-Applications/Kotlin-JDA)
+    created by [MinnDevelopment](https://github.com/MinnDevelopment)
+- [LavaPlayer v1.2.34+](https://github.com/sedmelluq/lavaplayer)
+    created by [sedmelluq](https://github.com/sedmelluq)
+- [JDA-NAS v1.0.3+](https://github.com/sedmelluq/jda-nas)
     created by [sedmelluq](https://github.com/sedmelluq)
