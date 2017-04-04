@@ -58,7 +58,7 @@ class FutureBot(token: String) {
 class PropertyLoader {
     fun load(name: String = "default.properties") {
         val props = Properties()
-        val resource = javaClass.classLoader.getResourceAsStream(name)
+        val resource = File(name).reader()
         props.load(resource)
         resource.close()
 

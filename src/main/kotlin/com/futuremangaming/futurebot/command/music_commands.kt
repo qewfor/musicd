@@ -137,7 +137,7 @@ fun timestamp(time: Long): String {
     val minutes = u.toMinutes(time) % 60
     val seconds = u.toSeconds(time) % 60
 
-    if (u.toHours(time) > 0)
+    if (hours > 0)
         return String.format("%02d:%02d:%02d", hours, minutes, seconds)
     else
         return String.format("%02d:%02d", minutes, seconds)

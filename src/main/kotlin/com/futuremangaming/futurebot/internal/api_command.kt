@@ -86,7 +86,7 @@ class CommandManagement(val bot: FutureBot, val prefix: String = "!") : EventLis
     private val commands: Set<Command> =
                           getMusic()  + // Music : Play, Skip, Queue, Shuffle
                           getStats()  + // Stats : Ping, Uptime
-                          getAdmin()  + // Admin : Eval, Shutdown
+                          getAdmin()  + // Admin : Eval, Shutdown, Settings
                           getMods()   + // Mods  : Prune, Lock, Unlock, Giveaway, Draw
                           getSocial()   // Social: Merch, Twitter, Youtube, Twitch
 

@@ -16,11 +16,17 @@
 @file:JvmName("AdminCommands")
 package com.futuremangaming.futurebot.command
 
+import club.minnced.kjda.div
+import club.minnced.kjda.entities.sendEmbedAsync
 import com.futuremangaming.futurebot.FutureBot
 import com.futuremangaming.futurebot.internal.AbstractCommand
 import com.futuremangaming.futurebot.internal.Command
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
+import org.apache.commons.lang3.StringUtils
+import java.io.File
+import java.util.Properties
+import java.util.TreeMap
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 
@@ -31,7 +37,59 @@ import javax.script.ScriptEngineManager
 
 val owner = "86699011792191488" // 86699011792191488
 
-fun getAdmin() = setOf<Command>(Eval, Shutdown)
+fun getAdmin() = setOf<Command>(Eval, Shutdown, Settings)
+
+object Settings : AdminCommand("set") {
+
+    override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
+        if (StringUtils.containsAny(args.toLowerCase(), "--list", "-l")) {
+            val props = Properties()
+            val reader = File("default.properties").reader()
+            props.load(reader)
+            reader.close()
+
+            val mutableMap = TreeMap<String, String>()
+            for (current in props.keys) {
+                mutableMap[current as String] = System.getProperty(current) ?: "T/D"
+            }
+
+            event.channel.sendEmbedAsync {
+                var longestKey = 0
+                var longestVal = 0
+                mutableMap.forEach { t, u ->
+                    if (longestKey < t.length) longestKey = t.length
+                    if (longestVal < u.length) longestVal = u.length
+                }
+                val list = mutableMap.map { entry ->
+                    val (key, value) = entry
+                    String.format("%-${longestKey}s: %${longestVal}s", key, value)
+                }
+
+                this += "```ldif\n"
+                this += list.joinToString("\n")
+                this += "```"
+            }
+            return
+        }
+
+        if (!args.contains(" ")) {
+            if (!args.isEmpty() && System.getProperty(args) !== null) {
+                System.getProperties().remove(args)
+                return respond(event.channel, "Removed Property `$args`!")
+            }
+            else {
+                return respond(event.channel, "No such property `$args`!")
+            }
+        }
+
+        val (key, value) = args / 2
+        val old = System.setProperty(key, value)
+        if (old === null)
+            respond(event.channel, "Set property `$key` to `$value`")
+        else
+            respond(event.channel, "Changed property `$key` from `$old` to `$value`")
+    }
+}
 
 object Eval : AdminCommand("eval") {
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
