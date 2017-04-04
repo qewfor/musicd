@@ -175,7 +175,7 @@ class LiveListener : EventListener {
             }
 
             color { TWITCH_COLOR }
-            image { "$preview?live=true" }
+            image { "$preview?time=$time" }
 
             val dateTime = OffsetDateTime.parse(created_at ?: return@embed)
 
