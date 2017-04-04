@@ -19,10 +19,7 @@ package com.futuremangaming.futurebot.internal
 import club.minnced.kjda.entities.div
 import club.minnced.kjda.entities.sendTextAsync
 import com.futuremangaming.futurebot.FutureBot
-import com.futuremangaming.futurebot.command.getAdmin
-import com.futuremangaming.futurebot.command.getMusic
-import com.futuremangaming.futurebot.command.getSocial
-import com.futuremangaming.futurebot.command.getStats
+import com.futuremangaming.futurebot.command.*
 import com.futuremangaming.futurebot.getLogger
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.TextChannel
@@ -90,6 +87,7 @@ class CommandManagement(val bot: FutureBot, val prefix: String = "!") : EventLis
                           getMusic()  + // Music : Play, Skip, Queue, Shuffle
                           getStats()  + // Stats : Ping, Uptime
                           getAdmin()  + // Admin : Eval, Shutdown
+                          getMods()   + // Mods  : Prune, Lock, Giveaway, Draw
                           getSocial()   // Social: Merch, Twitter, Youtube, Twitch
 
     fun onMessage(event: GuildMessageReceivedEvent) {

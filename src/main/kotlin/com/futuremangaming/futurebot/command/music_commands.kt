@@ -19,21 +19,18 @@ package com.futuremangaming.futurebot.command
 import club.minnced.kjda.entities.connectedChannel
 import club.minnced.kjda.entities.sendEmbedAsync
 import com.futuremangaming.futurebot.FutureBot
+import com.futuremangaming.futurebot.Permissions
 import com.futuremangaming.futurebot.internal.AbstractCommand
 import com.futuremangaming.futurebot.music.TrackRequest
+import com.futuremangaming.futurebot.music.delete
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
-import net.dv8tion.jda.core.exceptions.PermissionException
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import kotlin.jvm.JvmField as static
 
 fun getMusic() = setOf(Play, Skip, Queue, Shuffle)
 
-/**
- * @author Florian Spieß
- * @since  2017-01-02
- */
 object Play : MusicCommand("play") {
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
         if (args.isBlank())
@@ -44,7 +41,7 @@ object Play : MusicCommand("play") {
                 ?: event.member.connectedChannel
                 ?: return respond(event.channel, "There is no voice channel specified. Contact the host!")
         val remote = bot.musicModule.remote(event.guild, voice)
-        val isMod = member.isOwner || member.roles.any { it.id == MOD() }
+        val isMod = Permissions.isModerator(member)
 
         val identifier = if (args.startsWith("http")) args else "ytsearch:$args"
         remote.handleRequest(TrackRequest(remote, identifier, member, event.channel, event.message), isMod)
@@ -54,9 +51,8 @@ object Play : MusicCommand("play") {
 object Skip : MusicCommand("skip") {
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
         val member = event.member
-        val isMod = member.isOwner || member.roles.any { it.id == MOD() }
 
-        if (!isMod)
+        if (!Permissions.isModerator(member))
             return respond(event.channel, "Only moderators are allowed to skip!")
 
         val voice = member.voiceState.channel
@@ -68,8 +64,7 @@ object Skip : MusicCommand("skip") {
 
         respond(event.channel, "${member.asMention} skipped current track!")
 
-        try { event.message.delete().queue() }
-        catch (ex: PermissionException) { }
+        delete(event.message)
     }
 }
 
@@ -77,9 +72,8 @@ object Shuffle : MusicCommand("shuffle") {
 
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
         val member = event.member
-        val isMod = member.isOwner || member.roles.any { it.id == MOD() }
 
-        if (!isMod)
+        if (!Permissions.isModerator(member))
             return respond(event.channel, "Only moderators are allowed to shuffle!")
 
         val remote = bot.musicModule.remote(event.guild)
@@ -120,8 +114,10 @@ object Queue : MusicCommand("queue") {
                     if (queue.size <= i) break
                     val song = queue[i]
                     val info = song.info
-                    lines += "`${i + 1}.` **${info.title}** " +
-                            "[`${if (info.isStream) "live" else timestamp(info.length)}`]"
+                    lines += String.format("`%d.` **%s** [`%s`]",
+                            i + 1,
+                            if (info.title.length >= 40) info.title.substring(0..37) + "..." else info.title,
+                            if (info.isStream) "live" else timestamp(info.length))
                 }
 
                 this += lines.joinToString(separator = "\n")
@@ -149,14 +145,13 @@ fun timestamp(time: Long): String {
 
 open class MusicCommand(override val name: String) : AbstractCommand(name) {
     companion object {
-        val MOD        = { System.getProperty("role.mod") ?: "-1" }
         val CHANNEL    = { System.getProperty("channel.music") ?: "-1" }
         val VOICE      = { System.getProperty("channel.music.voice") ?: "-1" }
         val RESTRICTED = { System.getProperty("app.music.restrict")?.toBoolean() ?: true }
     }
 
     override fun checkPermission(member: Member): Boolean {
-        return super.checkPermission(member) && (!RESTRICTED() || member.voiceState?.channel?.id == VOICE())
+        return (!RESTRICTED() || member.voiceState?.channel?.id == VOICE())
     }
 
     override fun checkIgnored(channel: TextChannel): Boolean {

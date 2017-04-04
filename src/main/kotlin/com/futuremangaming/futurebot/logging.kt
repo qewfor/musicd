@@ -44,15 +44,10 @@ import kotlin.jvm.JvmField as static
 
 val loggers = HashMap<String, Logger>()
 val printLock = Any()
-val newLine = Regex("\n\r?")
 
 fun getLogger(name: String): Logger =
     loggers.getOrPut(name) { Logger(name) }
 
-/**
- * @author Florian Spieß
- * @since  2016-12-30
- */
 open class Logger internal constructor(internal val name: String) {
 
     var level = LoggerTag.valueOf(System.getProperty("bot.log.level", "info").toUpperCase())
@@ -105,9 +100,8 @@ open class Logger internal constructor(internal val name: String) {
         val listTags = tags.distinct().sortedBy { it.ordinal } .filter { it !== OFF }
         val head = "[${timeStamp()}] [$name] ${stackTags(listTags)} "
         val stream = if (error) err else out
-        val content = message.trim().replace(newLine, System.lineSeparator() + head)
 
-        return lazy(stream) { "$head$content" }
+        return lazy(stream) { "$head$message" }
     }
 
     fun log(message: Any, vararg tags: LoggerTag): String?
@@ -239,7 +233,7 @@ class AnsiCode {
 
 class SimpleLogger : Logger("JDA"), SimpleLog.LogListener {
     override fun onError(log: SimpleLog?, err: Throwable) {
-        log(err)
+        error(err)
     }
 
     override fun onLog(log: SimpleLog, logLevel: Level, message: Any?) {

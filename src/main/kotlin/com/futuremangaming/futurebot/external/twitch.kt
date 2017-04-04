@@ -18,6 +18,7 @@ package com.futuremangaming.futurebot.external
 
 import club.minnced.kjda.builders.embed
 import club.minnced.kjda.then
+import com.futuremangaming.futurebot.Permissions
 import com.futuremangaming.futurebot.getConfig
 import com.futuremangaming.futurebot.getLogger
 import com.mashape.unirest.http.Unirest
@@ -30,7 +31,6 @@ import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.events.Event
 import net.dv8tion.jda.core.events.user.UserGameUpdateEvent
 import net.dv8tion.jda.core.hooks.EventListener
-import org.apache.commons.lang3.exception.ExceptionUtils
 import java.net.URLEncoder
 import java.rmi.UnexpectedException
 import java.time.OffsetDateTime
@@ -77,7 +77,7 @@ class LiveListener : EventListener {
         if (event is UserGameUpdateEvent) synchronized(lock) {
             val user = event.user
             val member = event.guild.getMember(user)
-            if (user.id != USER())
+            if (!Permissions.isTwitch(member))
                 return
 
             if (member.game?.type === TWITCH)
