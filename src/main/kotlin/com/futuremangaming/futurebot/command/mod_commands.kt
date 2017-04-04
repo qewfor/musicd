@@ -17,6 +17,7 @@
 package com.futuremangaming.futurebot.command
 
 import Giveaways
+import club.minnced.kjda.embed
 import club.minnced.kjda.entities.editAsync
 import club.minnced.kjda.entities.sendTextAsync
 import club.minnced.kjda.plusAssign
@@ -94,6 +95,10 @@ object GiveawayCommand : ModCommand("giveaway") {
         val msg = ga.open(enter = "📩", close = "🔒", sub = sub)
         msg.editAsync {
             this += "Giving away **$prize**! React with 📩 to join and 🔒 to close!"
+            if (sub) embed {
+                this += "👉🏽 This giveaway is only for subscribers!"
+                color { 0x50aace }
+            }
         } then { delete(event.message) }
 
     }
