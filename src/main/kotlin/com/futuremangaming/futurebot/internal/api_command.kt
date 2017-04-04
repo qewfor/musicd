@@ -87,7 +87,7 @@ class CommandManagement(val bot: FutureBot, val prefix: String = "!") : EventLis
                           getMusic()  + // Music : Play, Skip, Queue, Shuffle
                           getStats()  + // Stats : Ping, Uptime
                           getAdmin()  + // Admin : Eval, Shutdown
-                          getMods()   + // Mods  : Prune, Lock, Giveaway, Draw
+                          getMods()   + // Mods  : Prune, Lock, Unlock, Giveaway, Draw
                           getSocial()   // Social: Merch, Twitter, Youtube, Twitch
 
     fun onMessage(event: GuildMessageReceivedEvent) {

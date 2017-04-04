@@ -17,28 +17,78 @@
 package com.futuremangaming.futurebot.command
 
 import Giveaways
-import club.minnced.kjda.embed
+import club.minnced.kjda.*
 import club.minnced.kjda.entities.editAsync
 import club.minnced.kjda.entities.sendTextAsync
-import club.minnced.kjda.plusAssign
-import club.minnced.kjda.then
 import com.futuremangaming.futurebot.FutureBot
 import com.futuremangaming.futurebot.Permissions
 import com.futuremangaming.futurebot.getLogger
 import com.futuremangaming.futurebot.internal.AbstractCommand
 import com.futuremangaming.futurebot.music.delete
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.launch
 import net.dv8tion.jda.core.Permission.MANAGE_PERMISSIONS
 import net.dv8tion.jda.core.Permission.MESSAGE_MANAGE
+import net.dv8tion.jda.core.Permission.MESSAGE_WRITE
 import net.dv8tion.jda.core.entities.Member
+import net.dv8tion.jda.core.entities.PermissionOverride
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 
-fun getMods() = setOf<ModCommand>(LockCommand, PruneCommand, GiveawayCommand, DrawCommand)
+fun getMods() = setOf<ModCommand>(/*LockCommand, UnlockCommand, */PruneCommand, GiveawayCommand, DrawCommand)
 
 /** Locks the current TextChannel down. */
 object LockCommand : ModCommand("lock") {
+
+    override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) { launch(CommonPool) {
+        val channel = event.channel
+        val guild = channel.guild
+        val override: PermissionOverride
+                = channel.getPermissionOverride(guild.publicRole) ?: channel.createPermissionOverride(guild.publicRole).get()!!
+
+        val manager = override.manager
+
+        manager.deny(MESSAGE_WRITE) then {
+            channel.sendMessage("This channel has been locked by ${event.author.asMention}!").start()
+        }
+        super.onVerified(args, event, bot)
+    }}
+
+    override fun checkPermission(channel: TextChannel): Boolean {
+        val canTalk = channel.canTalk()
+        val canPerm = channel.guild.selfMember.hasPermission(channel, MANAGE_PERMISSIONS)
+
+        if (!canPerm && canTalk) channel.sendTextAsync {
+            "I am unable to lock this channel. Please allow me to manage permissions for this channel."
+        }
+
+        return canPerm
+    }
+}
+
+object UnlockCommand : ModCommand("unlock") {
+
+    override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) { launch(CommonPool) {
+        val channel = event.channel
+        val guild = channel.guild
+        val override: PermissionOverride?
+                = channel.getPermissionOverride(guild.publicRole) ?: null
+
+        if (override !== null) {
+            val manager = override.manager
+
+            manager.grant(MESSAGE_WRITE) then {
+                channel.sendMessage("This channel has been unlocked by ${event.author.asMention}!").start()
+            }
+        }
+        else {
+            respond(channel, "There is nothing to unlock here")
+        }
+
+        super.onVerified(args, event, bot)
+    }}
 
     override fun checkPermission(channel: TextChannel): Boolean {
         val canTalk = channel.canTalk()
