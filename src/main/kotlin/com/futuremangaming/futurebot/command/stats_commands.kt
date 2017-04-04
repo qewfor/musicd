@@ -22,10 +22,6 @@ import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
 
-/**
- * @author Florian Spieß
- * @since  2016-12-31
- */
 object Ping : AbstractCommand("ping", "pong")
 object Uptime : SupplierCommand("uptime", { timeFormat() })
 

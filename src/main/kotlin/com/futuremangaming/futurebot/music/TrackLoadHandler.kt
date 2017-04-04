@@ -17,15 +17,12 @@
 package com.futuremangaming.futurebot.music
 
 import club.minnced.kjda.then
+import com.futuremangaming.futurebot.music.MusicModule.Companion.LOG
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 
-/**
- * @author Florian Spieß
- * @since  2017-01-02
- */
 class TrackLoadHandler(val trackRequest: TrackRequest) : AudioLoadResultHandler {
 
     var allowLive = false

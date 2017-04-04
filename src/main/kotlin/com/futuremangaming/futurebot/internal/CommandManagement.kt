@@ -17,69 +17,11 @@
 package com.futuremangaming.futurebot.internal
 
 import club.minnced.kjda.entities.div
-import club.minnced.kjda.entities.sendTextAsync
 import com.futuremangaming.futurebot.FutureBot
 import com.futuremangaming.futurebot.command.*
-import com.futuremangaming.futurebot.getLogger
-import net.dv8tion.jda.core.entities.Member
-import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.events.Event
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
-import net.dv8tion.jda.core.exceptions.PermissionException
 import net.dv8tion.jda.core.hooks.EventListener
-import org.apache.commons.lang3.exception.ExceptionUtils
-
-/**
- * @author Florian Spieß
- * @since  2016-12-30
- */
-
-interface Command {
-
-    val name: String
-
-    fun onCommand(args: String, event: GuildMessageReceivedEvent, bot: FutureBot)
-
-}
-
-abstract class AbstractCommand(override val name: String, val response: String? = null) : Command {
-
-    companion object {
-        val LOG = getLogger("CommandSystem")
-    }
-
-    val ignoredChannels: Set<TextChannel> = mutableSetOf()
-
-    open fun checkPermission(member: Member): Boolean = true
-
-    open fun checkPermission(channel: TextChannel): Boolean = channel.canTalk()
-
-    open fun checkIgnored(channel: TextChannel): Boolean = ignoredChannels.contains(channel)
-
-    fun respond(channel: TextChannel, response: String) {
-        try {
-            channel.sendTextAsync { response } catch { }
-        }
-        catch (ex: PermissionException) {
-            LOG.debug(ExceptionUtils.getStackTrace(ex))
-        }
-    }
-
-    /////////////////////
-
-    override final fun onCommand(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
-        if (checkPermission(event.member).not() || checkPermission(event.channel).not() || checkIgnored(event.channel))
-            return
-        // override here
-        onVerified(args, event, bot)
-    }
-
-    open fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
-        if (response !== null)
-            respond(event.channel, response)
-    }
-
-}
 
 class CommandManagement(val bot: FutureBot, val prefix: String = "!") : EventListener {
 

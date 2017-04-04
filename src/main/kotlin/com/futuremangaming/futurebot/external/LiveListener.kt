@@ -39,16 +39,12 @@ import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 import kotlin.jvm.JvmField as static
 
-/**
- * @author Florian Spieß
- * @since  2016-12-31
- */
-
-val TWITCH_COLOR = 0x6441A4
-
 class LiveListener : EventListener {
 
     companion object {
+
+        @static
+        val TWITCH_COLOR = 0x6441A4
         @static
         val TWITCH_LIVE_KEY = "twitch.live"
         @static

@@ -16,7 +16,6 @@
 
 package com.futuremangaming.futurebot.command
 
-import Giveaways
 import club.minnced.kjda.embed
 import club.minnced.kjda.entities.editAsync
 import club.minnced.kjda.entities.sendTextAsync
@@ -26,6 +25,7 @@ import com.futuremangaming.futurebot.FutureBot
 import com.futuremangaming.futurebot.Permissions
 import com.futuremangaming.futurebot.getLogger
 import com.futuremangaming.futurebot.internal.AbstractCommand
+import com.futuremangaming.futurebot.internal.Giveaways
 import com.futuremangaming.futurebot.music.delete
 import net.dv8tion.jda.core.Permission.MESSAGE_MANAGE
 import net.dv8tion.jda.core.entities.Member
