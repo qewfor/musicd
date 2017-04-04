@@ -151,7 +151,7 @@ open class MusicCommand(override val name: String) : AbstractCommand(name) {
     }
 
     override fun checkPermission(member: Member): Boolean {
-        return (!RESTRICTED() || member.voiceState?.channel?.id == VOICE())
+        return (!RESTRICTED() || (member.connectedChannel?.id == VOICE() && Permissions.isSubscriber(member)))
     }
 
     override fun checkIgnored(channel: TextChannel): Boolean {

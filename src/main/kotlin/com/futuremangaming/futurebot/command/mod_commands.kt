@@ -24,6 +24,7 @@ import club.minnced.kjda.plusAssign
 import club.minnced.kjda.then
 import com.futuremangaming.futurebot.FutureBot
 import com.futuremangaming.futurebot.Permissions
+import com.futuremangaming.futurebot.getLogger
 import com.futuremangaming.futurebot.internal.AbstractCommand
 import com.futuremangaming.futurebot.music.delete
 import net.dv8tion.jda.core.Permission.MANAGE_PERMISSIONS
@@ -62,6 +63,7 @@ object PruneCommand : ModCommand("prune") {
                 delete(messages.first())
             respond(event.channel, "${event.author.asMention} pruned **${messages.size} message(s)** in this channel.")
         }
+        super.onVerified(args, event, bot)
     }
 
     override fun checkPermission(channel: TextChannel): Boolean {
@@ -100,23 +102,31 @@ object GiveawayCommand : ModCommand("giveaway") {
                 color { 0x50aace }
             }
         } then { delete(event.message) }
-
+        super.onVerified(args, event, bot)
     }
 
 }
 
 object DrawCommand : ModCommand("draw") {
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
-
         val ga = Giveaways.giveFor(event.channel)
         if (ga.entrySize() < 1) return respond(event.channel, "Not enough people entered to draw a winner!")
 
         val winner = ga.pollWinner()
         respond(event.channel, "Aaand the winner is ${event.jda.getUserById(winner).asMention}! 🎊 Congratulations 🎊")
-
+        super.onVerified(args, event, bot)
     }
 }
 
 abstract class ModCommand(name: String) : AbstractCommand(name) {
+
+    companion object {
+        val LOG = getLogger("Moderation")
+    }
+
+    override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
+        LOG.info(String.format("%#s used %s in %#s", event.author, name, event.channel))
+    }
+
     override fun checkPermission(member: Member) = Permissions.isModerator(member)
 }

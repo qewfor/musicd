@@ -20,7 +20,7 @@ Firstly make sure to use the gradle version this was built in
 > Update gradle: `gradlew wrapper` 
 
 
-Secondly run the build task (shadowJar)
+Secondly run the build task
  
 > Run: `gradlew run`
 

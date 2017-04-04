@@ -5,6 +5,7 @@ import club.minnced.kjda.entities.sendText
 import club.minnced.kjda.plusAssign
 import club.minnced.kjda.then
 import com.futuremangaming.futurebot.Permissions
+import com.futuremangaming.futurebot.getLogger
 import gnu.trove.list.array.TLongArrayList
 import gnu.trove.map.hash.TLongObjectHashMap
 import net.dv8tion.jda.core.Permission.MESSAGE_MANAGE
@@ -21,6 +22,7 @@ import java.security.SecureRandom
 object Giveaways { // utility
 
     private val MAP = TLongObjectHashMap<Giveaway>()
+    val LOG = getLogger("Giveaway")
 
     fun giveFor(channel: TextChannel): Giveaway {
         if (!MAP.containsKey(channel.idLong))
@@ -88,9 +90,9 @@ class Giveaway(val channel: TextChannel) { // actual giveaway
         participants.clear()
 
         if (join !== null)
-            channel.addReactionById(message, join)
-        else
-            channel.addReactionById(message, end)
+            channel.addReactionById(message, join).queue()
+        channel.addReactionById(message, end).queue()
+        Giveaways.LOG.info("Giveaway in #${channel.name} was reset!")
     }
 
     fun enter(id: Long) {
