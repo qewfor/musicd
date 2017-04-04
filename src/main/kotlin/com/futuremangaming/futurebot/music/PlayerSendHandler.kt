@@ -19,10 +19,6 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.track.playback.AudioFrame
 import net.dv8tion.jda.core.audio.AudioSendHandler
 
-/**
- * @author Florian Spieß
- * @since  2017-01-02
- */
 class PlayerSendHandler(private val player: AudioPlayer) : AudioSendHandler {
 
     private var lastFrame: AudioFrame? = null

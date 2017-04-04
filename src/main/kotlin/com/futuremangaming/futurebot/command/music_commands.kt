@@ -37,7 +37,7 @@ object Play : MusicCommand("play") {
             return respond(event.channel, "Provide a link or id to a track resource!")
 
         val member = event.member
-        val voice = event.guild.getVoiceChannelById(VOICE())
+        val voice = event.guild.getVoiceChannelById(VOICE)
                 ?: event.member.connectedChannel
                 ?: return respond(event.channel, "There is no voice channel specified. Contact the host!")
         val remote = bot.musicModule.remote(event.guild, voice)
@@ -56,7 +56,7 @@ object Skip : MusicCommand("skip") {
             return respond(event.channel, "Only moderators are allowed to skip!")
 
         val voice = member.voiceState.channel
-                ?: return respond(event.channel, "You can only request something when you are in a voice channel")
+                ?: return respond(event.channel, "You can only skip something when you are in a voice channel")
         val remote = bot.musicModule.remote(event.guild, voice)
 
         if (!remote.skipTrack())
@@ -145,17 +145,17 @@ fun timestamp(time: Long): String {
 
 open class MusicCommand(override val name: String) : AbstractCommand(name) {
     companion object {
-        val CHANNEL    = { System.getProperty("channel.music") ?: "-1" }
-        val VOICE      = { System.getProperty("channel.music.voice") ?: "-1" }
-        val RESTRICTED = { System.getProperty("app.music.restrict")?.toBoolean() ?: true }
+        val CHANNEL: String get() = System.getProperty("channel.music") ?: "-1"
+        val VOICE: String get() = System.getProperty("channel.music.voice") ?: "-1"
+        val RESTRICTED: Boolean get() = System.getProperty("app.music.restrict")?.toBoolean() ?: true
     }
 
     override fun checkPermission(member: Member): Boolean {
-        return (!RESTRICTED() || (member.connectedChannel?.id == VOICE() && Permissions.isSubscriber(member)))
+        return (!RESTRICTED || (member.connectedChannel?.id == VOICE && Permissions.isSubscriber(member)))
     }
 
     override fun checkIgnored(channel: TextChannel): Boolean {
-        return RESTRICTED() && channel.id != CHANNEL()
+        return RESTRICTED && channel.id != CHANNEL
     }
 
 }

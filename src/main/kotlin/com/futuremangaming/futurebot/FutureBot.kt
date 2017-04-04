@@ -55,7 +55,7 @@ class FutureBot(token: String) {
     }
 }
 
-class PropertyLoader {
+object PropertyLoader {
     fun load(name: String = "default.properties") {
         val props = Properties()
         val resource = File(name).reader()
@@ -73,7 +73,7 @@ class PropertyLoader {
 }
 
 fun main(vararg args: String) {
-    PropertyLoader().load()
+    PropertyLoader.load()
     val loginCfg: Config = Config.fromJSON("login", File("$PATH/login.json"))
     FutureBot(
         loginCfg["token"] as? String

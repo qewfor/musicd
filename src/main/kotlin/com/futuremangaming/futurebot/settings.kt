@@ -30,7 +30,7 @@ fun getConfig(name: String): Config =
  * @author Florian Spieß
  * @since  2016-12-30
  */
-class Config internal constructor(val map: HashMap<String, Any>) : MutableMap<String, Any> by map {
+class Config internal constructor(val map: MutableMap<String, Any>) : MutableMap<String, Any> by map {
 
     constructor() : this(HashMap())
     constructor(json: JSONObject) : this(json.toMap() as HashMap<String, Any>)
