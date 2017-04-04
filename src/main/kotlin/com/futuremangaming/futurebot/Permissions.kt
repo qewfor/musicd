@@ -27,23 +27,23 @@ object Permissions {
 
     val TWITCH_USER_KEY = "twitch.user"
 
-    val MOD_ROLE = { System.getProperty(MOD_ROLE_KEY) ?: "-1" }
-    val SUB_ROLE = { System.getProperty(SUB_ROLE_KEY) ?: "-1" }
-    val TWITCH_USER = { System.getProperty(TWITCH_USER_KEY) ?: "-1" }
+    val MOD_ROLE: String get() = System.getProperty(MOD_ROLE_KEY) ?: "-1"
+    val SUB_ROLE: String get() = System.getProperty(SUB_ROLE_KEY) ?: "-1"
+    val TWITCH_USER: String get() =  System.getProperty(TWITCH_USER_KEY) ?: "-1"
 
     fun isModerator(member: Member): Boolean {
         val hasBan = member.hasPermission(BAN_MEMBERS)
-        val hasRole = member.roles.any { it.id == MOD_ROLE() }
+        val hasRole = member.roles.any { it.id == MOD_ROLE }
         val hasOwner = member.isOwner
 
         return hasOwner || hasBan || hasRole
     }
 
     fun isSubscriber(member: Member): Boolean {
-        val hasRole = member.roles.any { it.id == SUB_ROLE() }
+        val hasRole = member.roles.any { it.id == SUB_ROLE }
         return hasRole || isModerator(member)
     }
 
-    fun isTwitch(member: Member) = member.user.id == TWITCH_USER()
+    fun isTwitch(member: Member) = member.user.id == TWITCH_USER
 
 }

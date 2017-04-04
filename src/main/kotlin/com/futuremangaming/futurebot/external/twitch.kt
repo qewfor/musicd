@@ -62,10 +62,10 @@ class LiveListener : EventListener {
         @static
         val LOG = getLogger("Twitch")
 
-        val CHANNEL = { System.getProperty(CHANNEL_LIVE_KEY, "-1") }
-        val GUILD = { System.getProperty(BOT_GUILD_KEY, "-1") }
-        val USER = { System.getProperty(TWITCH_USER_KEY, "-1") }
-        val TWITCH_ID = { System.getProperty(TWITCH_CHANNEL_KEY, "-1") }
+        val CHANNEL: String get() = System.getProperty(CHANNEL_LIVE_KEY, "-1")
+        val GUILD: String get() = System.getProperty(BOT_GUILD_KEY, "-1")
+        val USER: String get() = System.getProperty(TWITCH_USER_KEY, "-1")
+        val TWITCH_ID: String get() = System.getProperty(TWITCH_CHANNEL_KEY, "-1")
     }
 
     var api: JDA? = null
@@ -99,14 +99,14 @@ class LiveListener : EventListener {
             }
         }
         else if (stream !== null){
-            val guild = api?.getGuildById(GUILD())
-            val game = guild?.getMemberById(USER())?.game
+            val guild = api?.getGuildById(GUILD)
+            val game = guild?.getMemberById(USER)?.game
             if (api?.presence?.game === null && game !== null && game.type === TWITCH)
                 api?.presence?.game = game
             else
                 api?.presence?.game = Game.of(stream.fields.firstOrNull()?.value ?: "Futureman is live!", stream.url)
             announce(
-                api?.getTextChannelById(CHANNEL())
+                api?.getTextChannelById(CHANNEL)
                    ?: guild?.publicChannel
                    ?: throw UnexpectedException("No announcement channel found"),
                 stream
@@ -139,7 +139,7 @@ class LiveListener : EventListener {
 
     fun stream(): Map<String, Any?>? {
         val client: String = (getConfig("login")["twitch_key"] as? String) ?: return null
-        val response = Unirest.get("https://api.twitch.tv/kraken/streams/${TWITCH_ID()}") // `65311054` is futureman's twitch id
+        val response = Unirest.get("https://api.twitch.tv/kraken/streams/$TWITCH_ID") // `65311054` is futureman's twitch id
                 .header("accept", "application/vnd.twitchtv.v5+json")
                 .header("client-id", client)
                 .asJson()

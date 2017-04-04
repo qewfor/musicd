@@ -44,3 +44,9 @@ task launch {
 task wrapper(type: Wrapper) {
     gradleVersion = '3.4.1'
 }
+
+kotlin {
+    experimental {
+        coroutines "enable"
+    }
+}

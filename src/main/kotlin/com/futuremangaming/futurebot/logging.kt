@@ -16,15 +16,15 @@
 
 package com.futuremangaming.futurebot
 
-import com.futuremangaming.futurebot.AnsiCode.Companion.BLUE
-import com.futuremangaming.futurebot.AnsiCode.Companion.CLEAN
-import com.futuremangaming.futurebot.AnsiCode.Companion.CYAN
-import com.futuremangaming.futurebot.AnsiCode.Companion.GREEN
-import com.futuremangaming.futurebot.AnsiCode.Companion.RED
-import com.futuremangaming.futurebot.AnsiCode.Companion.RED_LIGHT
-import com.futuremangaming.futurebot.AnsiCode.Companion.RESET
-import com.futuremangaming.futurebot.AnsiCode.Companion.WHITE_LIGHT
-import com.futuremangaming.futurebot.AnsiCode.Companion.cyanLight
+import com.futuremangaming.futurebot.AnsiCode.BLUE
+import com.futuremangaming.futurebot.AnsiCode.CLEAN
+import com.futuremangaming.futurebot.AnsiCode.CYAN
+import com.futuremangaming.futurebot.AnsiCode.GREEN
+import com.futuremangaming.futurebot.AnsiCode.RED
+import com.futuremangaming.futurebot.AnsiCode.RED_LIGHT
+import com.futuremangaming.futurebot.AnsiCode.RESET
+import com.futuremangaming.futurebot.AnsiCode.WHITE_LIGHT
+import com.futuremangaming.futurebot.AnsiCode.cyanLight
 import com.futuremangaming.futurebot.LoggerTag.DEBUG
 import com.futuremangaming.futurebot.LoggerTag.ERROR
 import com.futuremangaming.futurebot.LoggerTag.INFO
@@ -62,19 +62,18 @@ open class Logger internal constructor(internal val name: String) {
         val OUT: PrintStream = System.out
         @static
         val ERR: PrintStream = System.err
-        @static
-        val ZONE = { ZoneId.of(System.getProperty("app.time.zoneid", "UTC")) }
-        @static
-        val ANSI = { System.getProperty("app.log.ansi")?.toBoolean() ?: true }
+
+        val ZONE: ZoneId get() = ZoneId.of(System.getProperty("app.time.zoneid", "UTC"))
+        val ANSI: Boolean get() = System.getProperty("app.log.ansi")?.toBoolean() ?: true
 
         fun stackTags(tags: List<LoggerTag>): String {
             return tags
-                    .map { it.toString(ANSI()) }
+                    .map { it.toString(ANSI) }
                     .joinToString(" ")
         }
 
         fun timeStamp(temporal: TemporalAccessor = OffsetDateTime.now()): String {
-            val time = OffsetDateTime.from(temporal).atZoneSameInstant(ZONE())
+            val time = OffsetDateTime.from(temporal).atZoneSameInstant(ZONE)
             val hour = time[ChronoField.HOUR_OF_DAY]
             val minute  = time[ChronoField.MINUTE_OF_HOUR]
             val second  = time[ChronoField.SECOND_OF_MINUTE]
@@ -174,61 +173,59 @@ enum class LoggerTag(internal val ansi: String) {
 }
 
 @Suppress("unused")
-class AnsiCode {
-    companion object {
-        val ESC = "\u001B"
-        val RESET = "$ESC[0m"
-        val CLEAN = "${ESC}c"
+object AnsiCode {
+    val ESC = "\u001B"
+    val RESET = "$ESC[0m"
+    val CLEAN = "${ESC}c"
 
 
-        val BLACK = "$ESC[30m"
-        val BLACK_LIGHT  = "$ESC[30;1m"
+    val BLACK = "$ESC[30m"
+    val BLACK_LIGHT  = "$ESC[30;1m"
 
-        val RED   = "$ESC[31m"
-        val RED_LIGHT    = "$ESC[31;1m"
+    val RED   = "$ESC[31m"
+    val RED_LIGHT    = "$ESC[31;1m"
 
-        val GREEN = "$ESC[32m"
-        val GREEN_LIGHT  = "$ESC[32;1m"
+    val GREEN = "$ESC[32m"
+    val GREEN_LIGHT  = "$ESC[32;1m"
 
-        val YELLOW = "$ESC[33m"
-        val YELLOW_LIGHT = "$ESC[33;1m"
+    val YELLOW = "$ESC[33m"
+    val YELLOW_LIGHT = "$ESC[33;1m"
 
-        val BLUE  = "$ESC[34m"
-        val BLUE_LIGHT   = "$ESC[34;1m"
+    val BLUE  = "$ESC[34m"
+    val BLUE_LIGHT   = "$ESC[34;1m"
 
-        val PINK  = "$ESC[35m"
-        val PINK_LIGHT   = "$ESC[35;1m"
+    val PINK  = "$ESC[35m"
+    val PINK_LIGHT   = "$ESC[35;1m"
 
-        val CYAN  = "$ESC[36m"
-        val CYAN_LIGHT   = "$ESC[36;1m"
+    val CYAN  = "$ESC[36m"
+    val CYAN_LIGHT   = "$ESC[36;1m"
 
-        val WHITE = "$ESC[37m"
-        val WHITE_LIGHT  = "$ESC[37;1m"
+    val WHITE = "$ESC[37m"
+    val WHITE_LIGHT  = "$ESC[37;1m"
 
-        fun black(value: String): String       = "$BLACK$value$RESET"
-        fun blackLight(value: String): String  = "$BLACK_LIGHT$value$RESET"
+    fun black(value: String): String       = "$BLACK$value$RESET"
+    fun blackLight(value: String): String  = "$BLACK_LIGHT$value$RESET"
 
-        fun red(value: String): String         = "$RED$value$RESET"
-        fun redLight(value: String): String    = "$RED_LIGHT$value$RESET"
+    fun red(value: String): String         = "$RED$value$RESET"
+    fun redLight(value: String): String    = "$RED_LIGHT$value$RESET"
 
-        fun green(value: String): String       = "$GREEN$value$RESET"
-        fun greenLight(value: String): String  = "$GREEN_LIGHT$value$RESET"
+    fun green(value: String): String       = "$GREEN$value$RESET"
+    fun greenLight(value: String): String  = "$GREEN_LIGHT$value$RESET"
 
-        fun yellow(value: String): String      = "$YELLOW$value$RESET"
-        fun yellowLight(value: String): String = "$YELLOW_LIGHT$value$RESET"
+    fun yellow(value: String): String      = "$YELLOW$value$RESET"
+    fun yellowLight(value: String): String = "$YELLOW_LIGHT$value$RESET"
 
-        fun blue(value: String): String        = "$BLUE$value$RESET"
-        fun blueLight(value: String): String   = "$BLUE_LIGHT$value$RESET"
+    fun blue(value: String): String        = "$BLUE$value$RESET"
+    fun blueLight(value: String): String   = "$BLUE_LIGHT$value$RESET"
 
-        fun pink(value: String): String        = "$PINK$value$RESET"
-        fun pinkLight(value: String): String   = "$PINK_LIGHT$value$RESET"
+    fun pink(value: String): String        = "$PINK$value$RESET"
+    fun pinkLight(value: String): String   = "$PINK_LIGHT$value$RESET"
 
-        fun cyan(value: String): String        = "$CYAN$value$RESET"
-        fun cyanLight(value: String): String   = "$CYAN_LIGHT$value$RESET"
+    fun cyan(value: String): String        = "$CYAN$value$RESET"
+    fun cyanLight(value: String): String   = "$CYAN_LIGHT$value$RESET"
 
-        fun white(value: String): String       = "$WHITE$value$RESET"
-        fun whiteLight(value: String): String  = "$WHITE_LIGHT$value$RESET"
-    }
+    fun white(value: String): String       = "$WHITE$value$RESET"
+    fun whiteLight(value: String): String  = "$WHITE_LIGHT$value$RESET"
 }
 
 class SimpleLogger : Logger("JDA"), SimpleLog.LogListener {

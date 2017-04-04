@@ -144,9 +144,11 @@ object GiveawayCommand : ModCommand("giveaway") {
             sub = false
         }
 
-        val msg = ga.open(enter = "📩", close = "🔒", sub = sub)
+        val enter = Giveaways.ENTER_EMOJI
+        val close = Giveaways.CLOSE_EMOJI
+        val msg = ga.open(enter = enter, close = close, sub = sub)
         msg.editAsync {
-            this += "Giving away **$prize**! React with 📩 to join and 🔒 to close!"
+            this += "Giving away **$prize**! React with $enter to join and $close to close!"
             if (sub) embed {
                 this += "👉🏽 This giveaway is only for subscribers!"
                 color { 0x50aace }
