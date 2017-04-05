@@ -17,7 +17,7 @@
 package com.futuremangaming.futurebot.internal.giveaways
 
 import com.futuremangaming.futurebot.Permissions
-import com.futuremangaming.futurebot.internal.Giveaways
+import com.futuremangaming.futurebot.internal.giveaways.Giveaways
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.events.message.react.GenericMessageReactionEvent
 import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent

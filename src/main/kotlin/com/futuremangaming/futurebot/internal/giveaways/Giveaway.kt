@@ -21,7 +21,7 @@ import club.minnced.kjda.entities.editAsync
 import club.minnced.kjda.entities.sendText
 import club.minnced.kjda.plusAssign
 import club.minnced.kjda.then
-import com.futuremangaming.futurebot.internal.Giveaways
+import com.futuremangaming.futurebot.internal.giveaways.Giveaways
 import gnu.trove.list.array.TLongArrayList
 import net.dv8tion.jda.core.Permission.MESSAGE_MANAGE
 import net.dv8tion.jda.core.entities.Message

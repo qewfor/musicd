@@ -23,7 +23,9 @@ import net.dv8tion.jda.core.events.Event
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.core.hooks.EventListener
 
-class CommandManagement(val bot: FutureBot, val prefix: String = "!") : EventListener {
+class CommandManagement(val bot: FutureBot) : EventListener {
+
+    val prefix: String get() = System.getProperty("bot.prefix", "!")
 
     private val commands: Set<Command> =
                           getMusic()  + // Music : Play, Skip, Queue, Shuffle

@@ -27,10 +27,6 @@ import net.dv8tion.jda.core.utils.SimpleLog
 import java.io.File
 import java.util.Properties
 
-/**
- * @author Florian Spieß
- * @since  2016-12-30
- */
 class FutureBot(token: String) {
 
     companion object {

@@ -22,7 +22,7 @@ repositories {
 
 dependencies {
     compile 'com.github.DV8FromTheWorld:JDA:experimental~cache-SNAPSHOT'
-    compile 'com.github.JDA-Applications:Kotlin-JDA:testing-SNAPSHOT'
+    compile 'com.github.JDA-Applications:Kotlin-JDA:master-SNAPSHOT'
     compile 'com.sedmelluq:lavaplayer:1.2.34'
     compile 'com.sedmelluq:jda-nas:1.0.3'
 
