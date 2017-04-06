@@ -21,7 +21,6 @@ import club.minnced.kjda.entities.editAsync
 import club.minnced.kjda.entities.sendText
 import club.minnced.kjda.plusAssign
 import club.minnced.kjda.then
-import com.futuremangaming.futurebot.internal.giveaways.Giveaways
 import gnu.trove.list.array.TLongArrayList
 import net.dv8tion.jda.core.Permission.MESSAGE_MANAGE
 import net.dv8tion.jda.core.entities.Message
@@ -30,10 +29,10 @@ import java.security.SecureRandom
 
 class Giveaway(val channel: TextChannel) { // actual giveaway
 
-    private val participants = TLongArrayList()
     internal var join: String? = null
     internal var end: String? = null
     internal var sub: Boolean = false
+    private val participants = TLongArrayList()
     private val random = SecureRandom()
     private val adapter = GiveawayAdapter(this)
 
