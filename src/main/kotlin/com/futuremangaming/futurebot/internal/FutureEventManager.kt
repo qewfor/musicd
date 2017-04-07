@@ -26,10 +26,6 @@ import java.util.concurrent.*
 import java.util.concurrent.TimeUnit.MINUTES
 import kotlin.concurrent.thread
 
-/**
- * @author Florian Spieß
- * @since  2016-12-30
- */
 class FutureEventManager(val async: Boolean) : IEventManager {
 
     private val listeners: MutableSet<EventListener> = ConcurrentHashMap.newKeySet()

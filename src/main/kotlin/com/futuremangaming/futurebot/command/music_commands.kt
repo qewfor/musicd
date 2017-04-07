@@ -97,6 +97,14 @@ object Queue : MusicCommand("queue") {
         event.channel.sendEmbedAsync {
             color { 0x50aace }
 
+            var info = track.info
+
+            if (info.isStream) {
+                this += String.format("🎥 **Live** [%s](%s)",
+                        info.title.substring(0..37), info.uri)
+                return@sendEmbedAsync
+            }
+
             this += "Playing: [`${timestamp(track.position)}`/`${timestamp(track.duration)}`] " +
                     "**${track.info.title}**"
 
@@ -113,7 +121,7 @@ object Queue : MusicCommand("queue") {
                 for (i in 0..4) {
                     if (queue.size <= i) break
                     val song = queue[i]
-                    val info = song.info
+                    info = song.info
                     lines += String.format("`%d.` **%s** [`%s`]",
                             i + 1,
                             if (info.title.length >= 40) info.title.substring(0..37) + "..." else info.title,

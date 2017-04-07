@@ -37,25 +37,17 @@ import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
-import kotlin.jvm.JvmField as static
 
 class LiveListener : EventListener {
 
     companion object {
 
-        @static
         val TWITCH_COLOR = 0x6441A4
-        @static
         val TWITCH_LIVE_KEY = "twitch.live"
-        @static
         val TWITCH_USER_KEY = "twitch.user"
-        @static
         val TWITCH_CHANNEL_KEY = "twitch.channel"
-        @static
         val BOT_GUILD_KEY = "bot.guild"
-        @static
         val CHANNEL_LIVE_KEY = "channel.live"
-        @static
         val LOG = getLogger("Twitch")
 
         val CHANNEL: String get() = System.getProperty(CHANNEL_LIVE_KEY, "-1")

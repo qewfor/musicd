@@ -31,6 +31,8 @@ object Permissions {
     val SUB_ROLE: String get() = System.getProperty(SUB_ROLE_KEY) ?: "-1"
     val TWITCH_USER: String get() =  System.getProperty(TWITCH_USER_KEY) ?: "-1"
 
+    val BOT_OWNER: Long = 86699011792191488
+
     fun isModerator(member: Member): Boolean {
         val hasBan = member.hasPermission(BAN_MEMBERS)
         val hasRole = member.roles.any { it.id == MOD_ROLE }

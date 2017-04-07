@@ -19,6 +19,7 @@ package com.futuremangaming.futurebot.command
 import club.minnced.kjda.div
 import club.minnced.kjda.entities.sendEmbedAsync
 import com.futuremangaming.futurebot.FutureBot
+import com.futuremangaming.futurebot.Permissions
 import com.futuremangaming.futurebot.internal.AbstractCommand
 import com.futuremangaming.futurebot.internal.Command
 import net.dv8tion.jda.core.entities.Member
@@ -29,13 +30,6 @@ import java.util.Properties
 import java.util.TreeMap
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
-
-/**
- * @author Florian Spieß
- * @since  2016-12-31
- */
-
-val owner = "86699011792191488" // 86699011792191488
 
 fun getAdmin() = setOf<Command>(Eval, Shutdown, Settings)
 
@@ -108,7 +102,7 @@ object Eval : AdminCommand("eval") {
         var o: Any
 
         try {
-            o = engine.eval(args) ?: "null"
+            o = engine.eval(args).toString()
         }
         catch (ex: Throwable) {
             o = ex.cause ?: ex
@@ -140,5 +134,5 @@ object Shutdown : AdminCommand("shutdown") {
 }
 
 open class AdminCommand(override val name: String) : AbstractCommand(name) {
-    override fun checkPermission(member: Member) = member.user.id == owner || member.isOwner
+    override fun checkPermission(member: Member) = member.user.idLong == Permissions.BOT_OWNER || member.isOwner
 }

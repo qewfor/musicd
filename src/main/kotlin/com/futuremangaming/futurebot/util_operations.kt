@@ -21,11 +21,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.script.ScriptEngine
 import kotlin.experimental.inv
 
-/**
- * @author Florian Spieß
- * @since  2017-01-07
- */
-
 operator fun JSONObject.set(key: String, value: Any) {
     put(key, value)
 }

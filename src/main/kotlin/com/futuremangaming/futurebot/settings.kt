@@ -26,10 +26,6 @@ internal val configs: HashMap<String, Config> = hashMapOf()
 fun getConfig(name: String): Config =
         configs.getOrPut(name) { Config() }
 
-/**
- * @author Florian Spieß
- * @since  2016-12-30
- */
 class Config internal constructor(val map: MutableMap<String, Any>) : MutableMap<String, Any> by map {
 
     constructor() : this(HashMap())

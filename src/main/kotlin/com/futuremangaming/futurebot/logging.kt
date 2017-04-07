@@ -40,7 +40,6 @@ import java.time.ZoneId
 import java.time.temporal.ChronoField
 import java.time.temporal.TemporalAccessor
 import java.util.HashMap
-import kotlin.jvm.JvmField as static
 
 val loggers = HashMap<String, Logger>()
 val printLock = Any()
@@ -58,9 +57,7 @@ open class Logger internal constructor(internal val name: String) {
 
     companion object {
 
-        @static
         val OUT: PrintStream = System.out
-        @static
         val ERR: PrintStream = System.err
 
         val ZONE: ZoneId get() = ZoneId.of(System.getProperty("app.time.zoneid", "UTC"))
