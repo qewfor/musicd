@@ -100,8 +100,9 @@ object Queue : MusicCommand("queue") {
             var info = track.info
 
             if (info.isStream) {
-                this += String.format("🎥 **Live** [%s](%s)",
-                        info.title.substring(0..37), info.uri)
+                val title = info.title
+                this += String.format("🎥 **Live** [%2s](%s)",
+                        if (title.length >= 40) "${title.substring(0..37)}..." else title, info.uri)
                 return@sendEmbedAsync
             }
 
@@ -122,9 +123,10 @@ object Queue : MusicCommand("queue") {
                     if (queue.size <= i) break
                     val song = queue[i]
                     info = song.info
+                    val title = info.title
                     lines += String.format("`%d.` **%s** [`%s`]",
                             i + 1,
-                            if (info.title.length >= 40) info.title.substring(0..37) + "..." else info.title,
+                            if (title.length >= 40) "${title.substring(0..37)}..." else title,
                             if (info.isStream) "live" else timestamp(info.length))
                 }
 
