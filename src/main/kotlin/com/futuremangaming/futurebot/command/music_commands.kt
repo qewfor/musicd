@@ -101,7 +101,7 @@ object Queue : MusicCommand("queue") {
 
             if (info.isStream) {
                 val title = info.title
-                this += String.format("🎥 **Live** [%2s](%s)",
+                this += String.format("🎥 **Live** [%s](%s)",
                         if (title.length >= 40) "${title.substring(0..37)}..." else title, info.uri)
                 return@sendEmbedAsync
             }
