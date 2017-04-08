@@ -18,6 +18,7 @@ package com.futuremangaming.futurebot.command
 
 import club.minnced.kjda.div
 import club.minnced.kjda.entities.sendEmbedAsync
+import com.futuremangaming.futurebot.Assets
 import com.futuremangaming.futurebot.FutureBot
 import com.futuremangaming.futurebot.Permissions
 import com.futuremangaming.futurebot.internal.AbstractCommand
@@ -31,7 +32,7 @@ import java.util.TreeMap
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 
-fun getAdmin() = setOf<Command>(Eval, Shutdown, Settings)
+fun getAdmin() = setOf<Command>(Eval, Shutdown, Settings, Assetings)
 
 object Settings : AdminCommand("set") {
 
@@ -82,6 +83,54 @@ object Settings : AdminCommand("set") {
             respond(event.channel, "Set property `$key` to `$value`")
         else
             respond(event.channel, "Changed property `$key` from `$old` to `$value`")
+    }
+}
+
+object Assetings : AdminCommand("asset") {
+    override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
+        if (StringUtils.containsAny(args.toLowerCase(), "--list", "-l")) {
+            val props = Assets.all
+
+            val mutableMap = TreeMap<String, String>()
+            for (current in props.keys) {
+                mutableMap[current] = System.getProperty(current) ?: "T/D"
+            }
+
+            event.channel.sendEmbedAsync {
+                var longestKey = 0
+                var longestVal = 0
+                mutableMap.forEach { t, u ->
+                    if (longestKey < t.length) longestKey = t.length
+                    if (longestVal < u.length) longestVal = u.length
+                }
+                val list = mutableMap.map { entry ->
+                    val (key, value) = entry
+                    String.format("%-${longestKey}s: %${longestVal}s", key, value)
+                }
+
+                this += "```ldif\n"
+                this += list.joinToString("\n")
+                this += "```"
+            }
+            return
+        }
+
+        if (!args.contains(" ")) {
+            if (!args.isEmpty() && System.getProperty(args) !== null) {
+                System.getProperties().remove(args)
+                return Settings.respond(event.channel, "Removed Property `$args`!")
+            }
+            else {
+                return Settings.respond(event.channel, "No such property `$args`!")
+            }
+        }
+
+        val (key, value) = args / 2
+        val old = System.setProperty(key, value)
+        if (old === null)
+            Settings.respond(event.channel, "Set property `$key` to `$value`")
+        else
+            Settings.respond(event.channel, "Changed property `$key` from `$old` to `$value`")
     }
 }
 

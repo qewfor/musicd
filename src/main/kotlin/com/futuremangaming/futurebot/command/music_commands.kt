@@ -18,6 +18,7 @@ package com.futuremangaming.futurebot.command
 
 import club.minnced.kjda.entities.connectedChannel
 import club.minnced.kjda.entities.sendEmbedAsync
+import com.futuremangaming.futurebot.Assets
 import com.futuremangaming.futurebot.FutureBot
 import com.futuremangaming.futurebot.Permissions
 import com.futuremangaming.futurebot.internal.AbstractCommand
@@ -113,7 +114,7 @@ object Queue : MusicCommand("queue") {
 
                 footer {
                     value = "[${queue.size} Tracks] ${timeFormat(remote.remainingTime).replace("**", "")}"
-                    icon = "https://i.imgur.com/6iSNidq.png"
+                    icon = Assets.MUSIC_PLAYLIST_FOOTER
                 }
 
                 this += "\n\n"
@@ -124,8 +125,7 @@ object Queue : MusicCommand("queue") {
                     val song = queue[i]
                     info = song.info
                     val title = info.title
-                    lines += String.format("`%d.` **%s** [`%s`]",
-                            i + 1,
+                    lines += String.format("`%d.` **%s** [`%s`]", i + 1,
                             if (title.length >= 40) "${title.substring(0..37)}..." else title,
                             if (info.isStream) "live" else timestamp(info.length))
                 }
@@ -154,7 +154,7 @@ fun timestamp(time: Long): String {
 }
 
 open class MusicCommand(override val name: String) : AbstractCommand(name) {
-    companion object {
+    internal companion object {
         val CHANNEL: String get() = System.getProperty("channel.music") ?: "-1"
         val VOICE: String get() = System.getProperty("channel.music.voice") ?: "-1"
         val RESTRICTED: Boolean get() = System.getProperty("app.music.restrict")?.toBoolean() ?: true

@@ -18,6 +18,7 @@ package com.futuremangaming.futurebot.external
 
 import club.minnced.kjda.builders.embed
 import club.minnced.kjda.then
+import com.futuremangaming.futurebot.Assets
 import com.futuremangaming.futurebot.Permissions
 import com.futuremangaming.futurebot.getConfig
 import com.futuremangaming.futurebot.getLogger
@@ -153,16 +154,19 @@ class LiveListener : EventListener {
         val logo       = channel ["logo"]       ?. toString()
         val preview    = previews["large"]      ?. toString()
         val created_at = stream  ["created_at"] ?. toString()
+        val twitchUrl  = Assets.TWITCH_URL
 
         return embed {
             title { "Futureman is live now!" }
-            url { "https://twitch.tv/FuturemanGaming" }
+
+            if (twitchUrl !== null)
+                url { twitchUrl }
 
             description { "<:fmgSUP:219939370575069194> $status" }
 
             author {
                 value = "FuturemanGaming"
-                url = "https://twitch.tv/FuturemanGaming"
+                url = twitchUrl
                 icon = logo
             }
 

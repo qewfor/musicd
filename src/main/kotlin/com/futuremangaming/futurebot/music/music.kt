@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:JvmName("MusicModuleKt")
+@file:JvmName("Music")
 package com.futuremangaming.futurebot.music
 
 import club.minnced.kjda.entities.sendTextAsync
-import com.futuremangaming.futurebot.music.MusicModule.Companion.LOG
+import com.futuremangaming.futurebot.getLogger
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.MessageChannel
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.exceptions.PermissionException
+
+val LOG = getLogger("MusicModule")
 
 data class TrackRequest(
     val manager: PlayerRemote,

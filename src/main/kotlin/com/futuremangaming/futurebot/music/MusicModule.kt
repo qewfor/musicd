@@ -16,7 +16,6 @@
 
 package com.futuremangaming.futurebot.music
 
-import com.futuremangaming.futurebot.getLogger
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
@@ -27,7 +26,6 @@ class MusicModule {
 
     companion object {
         internal val PLAYER_MANAGER: AudioPlayerManager
-        val LOG = getLogger("MusicModule")
 
         init {
             PLAYER_MANAGER = DefaultAudioPlayerManager()

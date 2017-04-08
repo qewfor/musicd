@@ -17,7 +17,6 @@
 package com.futuremangaming.futurebot.music
 
 import club.minnced.kjda.then
-import com.futuremangaming.futurebot.music.MusicModule.Companion.LOG
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
@@ -34,7 +33,7 @@ class TrackLoadHandler(val trackRequest: TrackRequest) : AudioLoadResultHandler 
     override fun loadFailed(exception: FriendlyException) {
         val (_, id, member, channel) = trackRequest
         send(channel, "${member.asMention}, failed to load track for id `$id`!\n```\n${exception.message}\n```")
-        LOG error exception
+        LOG debug exception
     }
 
     override fun trackLoaded(track: AudioTrack?) {

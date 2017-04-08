@@ -17,6 +17,7 @@
 package com.futuremangaming.futurebot.command
 
 import club.minnced.kjda.entities.sendEmbedAsync
+import com.futuremangaming.futurebot.Assets
 import com.futuremangaming.futurebot.FutureBot
 import com.futuremangaming.futurebot.internal.AbstractCommand
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
@@ -24,13 +25,13 @@ import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 fun getSocial() = setOf(Merch, Twitter, Youtube, Twitch)
 
 object Merch   : SocialCommand("merch",
-    "Find the latest merch at the [shop](https://www.designbyhumans.com/shop/FuturemanGaming/)")
+    "Find the latest merch at the [shop](${Assets.SOCIAL_MERCH})")
 object Twitter : SocialCommand("twitter",
-    "Follow Futureman on Twitter [@FuturemanGaming](https://twitter.com/futuremangaming)")
+    "Follow Futureman on Twitter [@FuturemanGaming](${Assets.SOCIAL_TWITTER})")
 object Youtube : SocialCommand("youtube",
-    "Subscribe to Futureman on Youtube: [FuturemanGaming](https://www.youtube.com/channel/UCfW0G1nRUW-r3wz6fWUXA4Q)")
+    "Subscribe to Futureman on Youtube: [FuturemanGaming](${Assets.SOCIAL_YOUTUBE})")
 object Twitch  : SocialCommand("twitch",
-    "Follow Futureman on Twitch: [twitch.tv/FuturemanGaming](https://twitch.tv/FuturemanGaming)")
+    "Follow Futureman on Twitch: [twitch.tv/FuturemanGaming](${Assets.SOCIAL_TWITCH})")
 
 open class SocialCommand(name: String, val description: String) : AbstractCommand(name, null) {
 
