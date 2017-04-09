@@ -17,6 +17,7 @@
 package com.futuremangaming.futurebot
 
 import club.minnced.kjda.*
+import com.futuremangaming.futurebot.external.DisconnectListener
 import com.futuremangaming.futurebot.external.LiveListener
 import com.futuremangaming.futurebot.internal.CommandManagement
 import com.futuremangaming.futurebot.internal.FutureEventManager
@@ -43,6 +44,7 @@ class FutureBot(token: String) {
 
         this += CommandManagement(this@FutureBot)
         this += LiveListener()
+        this += DisconnectListener
     }
 
     init {

@@ -38,7 +38,7 @@ class MusicManager {
 
             guild.audioManager.sendingHandler = PlayerSendHandler(player)
             player.addListener(scheduler)
-            player.volume = 75
+            player.volume = Integer.decode(System.getProperty("app.music.volume", "50"))
             return@getOrPut player
         }
     }

@@ -31,6 +31,7 @@ import com.futuremangaming.futurebot.LoggerTag.INFO
 import com.futuremangaming.futurebot.LoggerTag.INTERNAL
 import com.futuremangaming.futurebot.LoggerTag.OFF
 import com.futuremangaming.futurebot.LoggerTag.TRACE
+import com.futuremangaming.futurebot.LoggerTag.WARN
 import net.dv8tion.jda.core.utils.SimpleLog
 import net.dv8tion.jda.core.utils.SimpleLog.Level
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -107,7 +108,7 @@ open class Logger internal constructor(internal val name: String) {
     infix fun internal(message: Any): String?  = log(message, INTERNAL)
     infix fun debug(message: Any): String?     = log(message, DEBUG)
     infix fun info(message: Any): String?      = log(message, INFO)
-    infix fun warn(message: Any): String?      = log(message, TRACE)
+    infix fun warn(message: Any): String?      = log(message, WARN)
     infix fun error(message: Any): String?     = log(convert(message), true, ERROR)
     infix fun log(message: Any): String?       = info(message)
 
