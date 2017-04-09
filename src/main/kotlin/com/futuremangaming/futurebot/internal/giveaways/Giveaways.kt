@@ -31,7 +31,7 @@ object Giveaways {
     val ENTER_EMOJI: String get() = System.getProperty(ENTER_EMOJI_KEY) ?: "📩"
     val CLOSE_EMOJI: String get() = System.getProperty(CLOSE_EMOJI_KEY) ?: "🔒"
 
-    val LOG = getLogger("Giveaway")
+    val LOG = getLogger(Giveaways::class.java)
 
     fun giveFor(channel: TextChannel): Giveaway {
         if (!MAP.containsKey(channel.idLong))

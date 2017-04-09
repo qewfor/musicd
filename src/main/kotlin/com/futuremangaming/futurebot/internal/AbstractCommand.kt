@@ -28,7 +28,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 abstract class AbstractCommand(override val name: String, val response: String? = null) : Command {
 
     companion object {
-        val LOG = getLogger("CommandSystem")
+        val LOG = getLogger(CommandManagement::class.java)
     }
 
     val ignoredChannels: Set<TextChannel> = mutableSetOf()

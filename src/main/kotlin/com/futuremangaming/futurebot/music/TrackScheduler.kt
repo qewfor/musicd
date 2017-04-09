@@ -53,7 +53,7 @@ class TrackScheduler(val player: AudioPlayer, val guild: Guild, val manager: Mus
             val track = queue.poll()
             if (player.startTrack(track, !skip))
                 return true
-            getLogger("Music") warn "Track ${track.info.title} could not be played!"
+            getLogger(TrackScheduler::class.java).warn("Track ${track.info.title} could not be played!")
         }
 
         destroy()
@@ -79,13 +79,13 @@ class TrackScheduler(val player: AudioPlayer, val guild: Guild, val manager: Mus
     }
 
     override fun onTrackStuck(player: AudioPlayer?, track: AudioTrack, thresholdMs: Long) {
-        getLogger("Music") error "Track got stuck [${track.info.title}]. Starting next..."
+        getLogger(TrackScheduler::class.java).error("Track got stuck [${track.info.title}]. Starting next...")
         nextTrack(true)
     }
 
     override fun onTrackException(player: AudioPlayer?, track: AudioTrack?, exception: FriendlyException) {
-        val log = getLogger("Music")
-        log error "Encountered FriendlyException [${exception.severity}]"
+        val log = getLogger(TrackScheduler::class.java)
+        log.error("Encountered FriendlyException [${exception.severity}]")
 
         nextTrack(true)
 

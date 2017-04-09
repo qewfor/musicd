@@ -32,7 +32,7 @@ class FutureBot(token: String) {
 
     companion object {
         @field:JvmField
-        val LOG = getLogger("FutureBot")
+        val LOG = getLogger(FutureBot::class.java)
     }
 
     val musicModule = MusicModule()

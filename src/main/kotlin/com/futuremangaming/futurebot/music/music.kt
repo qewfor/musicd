@@ -24,7 +24,7 @@ import net.dv8tion.jda.core.entities.MessageChannel
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.exceptions.PermissionException
 
-val LOG = getLogger("MusicModule")
+val LOG = getLogger(MusicModule::class.java)
 
 data class TrackRequest(
     val manager: PlayerRemote,
@@ -47,6 +47,6 @@ fun send(channel: MessageChannel, msg: String) {
     }
     catch (ex: PermissionException) { }
     catch (ex: Exception) {
-        LOG.log(ex)
+        LOG.error("Failed to send message", ex)
     }
 }

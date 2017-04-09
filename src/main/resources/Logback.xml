@@ -14,14 +14,16 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<configuration debug="false" scan="false">
+<configuration>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>[%d{HH:mm:ss, -5}] [%thread] [%logger{36}] %level - %msg%n</pattern>
         </encoder>
     </appender>
 
-    <root level="debug"> </root>
+    <root level="info">
+        <appender-ref ref="STDOUT" />
+    </root>
 
 </configuration>

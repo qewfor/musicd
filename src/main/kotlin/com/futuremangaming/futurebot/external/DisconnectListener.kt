@@ -39,7 +39,7 @@ object DisconnectListener : EventListener {
         }
         is ExceptionEvent -> {
             if (!event.isLogged)
-                LOG.warn(event.cause)
+                LOG.warn("Unhandled JDA Exception", event.cause)
             Unit
         }
         else -> { }

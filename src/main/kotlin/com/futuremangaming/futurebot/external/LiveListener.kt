@@ -110,7 +110,7 @@ class LiveListener : EventListener {
             channel.sendMessage(stream) then { System.setProperty(TWITCH_LIVE_KEY, "true") }
         }
         catch (ex: Exception) {
-            LOG.log(ex)
+            LOG.error("Uncaught Exception", ex)
         }
     }
 
@@ -122,7 +122,7 @@ class LiveListener : EventListener {
             onStream(embed, isQuery = true)
         }
         catch (ex: UnirestException) {
-            LOG.debug(ex)
+            LOG.debug("Connection Failure", ex)
         }
     }
 
@@ -134,7 +134,7 @@ class LiveListener : EventListener {
                 .asJson()
         if (response.status >= 300) {
             val msg = "Invalid response: " + response.statusText
-            LOG error msg
+            LOG.error(msg)
             throw UnirestException(msg)
         }
         return response.body.`object`?.toMap()
@@ -147,7 +147,7 @@ class LiveListener : EventListener {
         val channel  = stream["channel"] as? Map<String, Any> ?: throw IllegalArgumentException("Channel is null")
         val previews = stream["preview"] as? Map<String, Any> ?: throw IllegalArgumentException("Previews is null")
 
-        LiveListener.LOG internal stream.toString()
+        LOG.debug(stream.toString())
 
         val time       = System.currentTimeMillis()
         val status     = channel ["status"]     ?. toString()
@@ -206,10 +206,10 @@ class LiveListener : EventListener {
                 }
             }
             catch (ex: InterruptedException) {
-                LOG warn "Interrupted Thread: ${Thread.currentThread().name}"
+                LOG.warn("Interrupted Thread")
             }
             catch (ex: Exception) {
-                LOG log ex
+                LOG.error("Uncaught Failure", ex)
             }
         }
 
