@@ -30,7 +30,7 @@ dependencies {
     compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.14'
 
     compile 'ch.qos.logback:logback-classic:1.2.3'
-    compile 'org.fusesource.jansi:jansi:1.8'
+    //compile 'org.fusesource.jansi:jansi:1.14'
 }
 
 configurations.all {
