@@ -19,6 +19,7 @@ package com.futuremangaming.futurebot
 object Assets {
 
     val MUSIC_PLAYLIST_FOOTER: String? get() = System.getProperty("music.playlist.footer")
+    val MUSIC_EMBED_COLOR: Int get() = Integer.decode(System.getProperty("music.embed.color", "0x50aace"))
 
     val TWITCH_URL: String? get() = System.getProperty("twitch.url")
 
@@ -29,6 +30,7 @@ object Assets {
 
     val all = mapOf(
         "music.playlist.footer" to MUSIC_PLAYLIST_FOOTER,
+        "music.embed.color"     to MUSIC_EMBED_COLOR,
         "twitch.url"     to TWITCH_URL,
         "social.merch"   to SOCIAL_MERCH,
         "social.twitter" to SOCIAL_TWITTER,

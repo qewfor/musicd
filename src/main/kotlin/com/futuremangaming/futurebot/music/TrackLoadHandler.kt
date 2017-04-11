@@ -16,7 +16,11 @@
 
 package com.futuremangaming.futurebot.music
 
+import club.minnced.kjda.entities.sendEmbedAsync
 import club.minnced.kjda.then
+import com.futuremangaming.futurebot.Assets
+import com.futuremangaming.futurebot.mask0
+import com.futuremangaming.futurebot.mask1
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
@@ -40,13 +44,14 @@ class TrackLoadHandler(val trackRequest: TrackRequest) : AudioLoadResultHandler 
         if (track === null) return
         val (remote, id, member, channel, message) = trackRequest
         delete(message)
-        if (track.info.isStream) {
+        val info = track.info
+        if (info.isStream) {
             if (!allowLive) {
                 return send(channel, "${member.asMention}, live streams are not allowed for track requests.")
             }
             else {
                 if (remote.scheduler.enqueue(track))
-                    send(channel, "Started live sessions for `${track.info.author}`! [Started by ${member.asMention}]")
+                    send(channel, "Started live sessions for `${info.author}`! [Started by ${member.asMention}]")
                 else
                     send(channel, "Failed to start live session for `$id`! Sorry to ${member.asMention} :(")
 
@@ -55,7 +60,11 @@ class TrackLoadHandler(val trackRequest: TrackRequest) : AudioLoadResultHandler 
         }
 
         val started: Boolean = remote.scheduler.enqueue(track)
-        send(channel, "${if (started) "Started playing " else "Loaded "}track `${track.info.title}` [Requested by ${member.asMention}]")
+        channel.sendEmbedAsync {
+            color { Assets.MUSIC_EMBED_COLOR }
+            this += "${if (started) "Started playing " else "Loaded "}track **" +
+                "[${info.title.mask0()}](${info.uri.mask1()})** [Requested by ${member.asMention}]"
+        }
     }
 
     override fun playlistLoaded(playlist: AudioPlaylist?) {
