@@ -7,7 +7,7 @@ plugins {
 }
 
 group = 'com.futuremangaming'
-version = '1.BETA.0'
+version = '1.BETA.1'
 
 mainClassName = 'com.futuremangaming.futurebot.FutureBotKt'
 
