@@ -124,7 +124,7 @@ object Queue : MusicCommand("queue") {
                     info = song.info
                     val title = info.title
                     lines += String.format("`%d.` **[%s](%s)** [`%s`]", i + 1,
-                            (if (title.length >= 40) "${title.substring(0..37)}..." else title).mask1(), info.uri.mask0(),
+                            (if (title.length >= 40) "${title.substring(0..37)}..." else title).mask0(), info.uri.mask1(),
                             if (info.isStream) "live" else timestamp(info.length))
                 }
 
