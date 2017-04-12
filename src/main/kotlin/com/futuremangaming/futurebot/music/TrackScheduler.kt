@@ -31,12 +31,12 @@ import net.dv8tion.jda.core.entities.VoiceChannel
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 
-class TrackScheduler(val player: AudioPlayer, val guild: Guild, val manager: MusicManager) : AudioEventAdapter() { // copied from demo
+class TrackScheduler(val player: AudioPlayer, val guild: Guild, val manager: MusicManager) : AudioEventAdapter() {
 
-    internal var queue: BlockingQueue<AudioTrack> = LinkedBlockingQueue()
+    internal val queue: BlockingQueue<AudioTrack> = LinkedBlockingQueue()
     internal var voice: VoiceChannel? = null
 
-    infix fun enqueue(track: AudioTrack): Boolean {
+    infix fun enqueue(track: AudioTrack): Boolean = synchronized(queue) {
         if (track.info.isStream) {
             return player.startTrack(track, false)
         }
@@ -48,7 +48,7 @@ class TrackScheduler(val player: AudioPlayer, val guild: Guild, val manager: Mus
         return true
     }
 
-    fun nextTrack(skip: Boolean = false): Boolean {
+    fun nextTrack(skip: Boolean = false): Boolean = synchronized(queue) {
         while (queue.isNotEmpty()) {
             val track = queue.poll()
             if (player.startTrack(track, !skip))
@@ -61,6 +61,7 @@ class TrackScheduler(val player: AudioPlayer, val guild: Guild, val manager: Mus
     }
 
     fun destroy() {
+        queue.clear()
         manager.resetPlayer(guild)
         guild.audioManager.closeAudioConnection()
     }
@@ -70,7 +71,7 @@ class TrackScheduler(val player: AudioPlayer, val guild: Guild, val manager: Mus
             guild.audioManager.openAudioConnection(voice)
     }
 
-    override fun onTrackEnd(player: AudioPlayer?, track: AudioTrack?, endReason: AudioTrackEndReason?) {
+    override fun onTrackEnd(player: AudioPlayer?, track: AudioTrack?, endReason: AudioTrackEndReason) {
         if (endReason === STOPPED || endReason === CLEANUP)
             return destroy()
 

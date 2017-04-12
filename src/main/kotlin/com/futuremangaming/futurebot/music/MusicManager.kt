@@ -25,24 +25,23 @@ class MusicManager {
 
     private val players: MutableMap<Long, AudioPlayer> = TDecorators.wrap(TLongObjectHashMap<AudioPlayer>())
     private val schedulers: MutableMap<AudioPlayer, TrackScheduler> = hashMapOf()
+    private val defaultVolume: Int get() = Integer.decode(System.getProperty("app.music.volume", "50"))
 
     fun resetPlayer(guild: Guild) {
         getPlayer(guild).destroy()
         schedulers.remove(players.remove(guild.idLong))
     }
 
-    fun getPlayer(guild: Guild): AudioPlayer {
-        return players.getOrPut(guild.idLong) {
-            val player = MusicModule.PLAYER_MANAGER.createPlayer()
-            val scheduler = schedulers.getOrPut(player, { TrackScheduler(player, guild, this@MusicManager) })
+    fun getPlayer(guild: Guild) = players.getOrPut(guild.idLong) {
+        val player = MusicModule.PLAYER_MANAGER.createPlayer()
+        val scheduler = schedulers.getOrPut(player) { TrackScheduler(player, guild, this@MusicManager) }
 
-            guild.audioManager.sendingHandler = PlayerSendHandler(player)
-            player.addListener(scheduler)
-            player.volume = Integer.decode(System.getProperty("app.music.volume", "50"))
-            return@getOrPut player
-        }
+        guild.audioManager.sendingHandler = PlayerSendHandler(player)
+        player.addListener(scheduler)
+        player.volume = defaultVolume
+        return@getOrPut player
     }
 
-    fun getScheduler(guild: Guild): TrackScheduler = schedulers[getPlayer(guild)]!!
+    fun getScheduler(guild: Guild) = schedulers[getPlayer(guild)]!!
 
 }

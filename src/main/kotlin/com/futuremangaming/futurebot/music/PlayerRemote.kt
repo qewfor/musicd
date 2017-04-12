@@ -22,7 +22,6 @@ import net.dv8tion.jda.core.entities.VoiceChannel
 import org.apache.commons.lang3.StringUtils
 import java.util.Collections
 import java.util.Queue
-import java.util.concurrent.LinkedBlockingQueue
 
 class PlayerRemote internal constructor(val player: AudioPlayer, val scheduler: TrackScheduler) {
 
@@ -50,13 +49,13 @@ class PlayerRemote internal constructor(val player: AudioPlayer, val scheduler: 
 
     fun skipTrack() = scheduler.nextTrack(true)
 
-    fun shuffle() {
+    fun shuffle() = synchronized(scheduler.queue) {
+        val tracks = queue.toMutableList()
+        this.queue.clear()
 
-        val queue = queue.toList()
+        Collections.shuffle(tracks)
 
-        Collections.shuffle(queue)
-
-        scheduler.queue = LinkedBlockingQueue(queue)
+        scheduler.queue += tracks
     }
 
     fun removeByName(name: String): Boolean = scheduler.queue.removeAll {
