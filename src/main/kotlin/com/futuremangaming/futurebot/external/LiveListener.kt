@@ -181,10 +181,7 @@ class LiveListener : EventListener {
 
             var game = channel["game"] ?. toString() ?: return@embed
 
-            field {
-                name = "Directory"
-                value = game
-            }
+            footer { value = game }
 
             game = URLEncoder.encode(game, "UTF-8").replace("+", "%20")
 
