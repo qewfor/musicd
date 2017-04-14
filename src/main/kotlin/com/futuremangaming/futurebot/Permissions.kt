@@ -18,6 +18,7 @@ package com.futuremangaming.futurebot
 
 import net.dv8tion.jda.core.Permission.BAN_MEMBERS
 import net.dv8tion.jda.core.entities.Member
+import net.dv8tion.jda.core.entities.Role
 
 
 object Permissions {
@@ -31,20 +32,26 @@ object Permissions {
     val SUB_ROLE: String get() = System.getProperty(SUB_ROLE_KEY) ?: "-1"
     val TWITCH_USER: String get() =  System.getProperty(TWITCH_USER_KEY) ?: "-1"
 
-    val BOT_OWNER: Long = 86699011792191488
-
-    fun isModerator(member: Member): Boolean {
-        val hasBan = member.hasPermission(BAN_MEMBERS)
-        val hasRole = member.roles.any { it.id == MOD_ROLE }
-        val hasOwner = member.isOwner
-
-        return hasOwner || hasBan || hasRole
-    }
+    val BOT_OWNER: Long = 86699011792191488 //this be minn
 
     fun isSubscriber(member: Member): Boolean {
-        val hasRole = member.roles.any { it.id == SUB_ROLE }
-        return hasRole || isModerator(member)
+        val subRole = member.guild.getRoleById(SUB_ROLE)
+        return hasRole(member, subRole) || isModerator(member)
     }
+
+    fun isModerator(member: Member): Boolean {
+        if (isOwner(member) || member.hasPermission(BAN_MEMBERS))
+            return true
+
+        val modRole = member.guild.getRoleById(MOD_ROLE)
+        return hasRole(member, modRole)
+    }
+
+    fun isOwner(member: Member)
+            = member.isOwner || member.user.idLong == BOT_OWNER
+
+    private fun hasRole(member: Member, role: Role?)
+        = member.roles.firstOrNull()?.position ?: -1 >= role?.position ?: Int.MAX_VALUE
 
     fun isTwitch(member: Member) = member.user.id == TWITCH_USER
 

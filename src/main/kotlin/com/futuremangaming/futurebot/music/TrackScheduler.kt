@@ -20,7 +20,6 @@ import com.futuremangaming.futurebot.getLogger
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
-import com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.FAULT
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason.CLEANUP
@@ -90,6 +89,6 @@ class TrackScheduler(val player: AudioPlayer, val guild: Guild, val manager: Mus
 
         nextTrack(true)
 
-        if (exception.severity === FAULT) { exception.printStackTrace() }
+        //if (exception.severity === FAULT) { exception.printStackTrace() }
     }
 }

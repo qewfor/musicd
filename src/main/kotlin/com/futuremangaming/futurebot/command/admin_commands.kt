@@ -183,5 +183,5 @@ object Shutdown : AdminCommand("shutdown") {
 }
 
 open class AdminCommand(override val name: String) : AbstractCommand(name) {
-    override fun checkPermission(member: Member) = member.user.idLong == Permissions.BOT_OWNER || member.isOwner
+    override fun checkPermission(member: Member) = Permissions.isOwner(member)
 }
