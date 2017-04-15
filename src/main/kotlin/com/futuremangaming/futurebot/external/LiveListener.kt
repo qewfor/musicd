@@ -55,6 +55,7 @@ class LiveListener : EventListener {
         val GUILD: String get() = System.getProperty(BOT_GUILD_KEY, "-1")
         val USER: String get() = System.getProperty(TWITCH_USER_KEY, "-1")
         val TWITCH_ID: String get() = System.getProperty(TWITCH_CHANNEL_KEY, "-1")
+        val LIVE: Boolean get() = System.getProperty(TWITCH_LIVE_KEY, "false").toBoolean()
     }
 
     var api: JDA? = null
@@ -77,7 +78,7 @@ class LiveListener : EventListener {
     }
 
     fun onStream(stream: MessageEmbed?, isQuery: Boolean = false) {
-        if (live()) {
+        if (LIVE) {
             if (isQuery && queryFailures++ < 5)
                 return // We make sure that it is actually offline by making 5 failure checks
 
@@ -101,11 +102,12 @@ class LiveListener : EventListener {
                 stream
             )
             System.setProperty(TWITCH_LIVE_KEY, "true")
+            LOG.debug("Announced Live!")
         }
     }
 
     fun announce(channel: TextChannel, stream: MessageEmbed) {
-        if (live()) return
+        if (LIVE) return
         try {
             channel.sendMessage(stream) then { System.setProperty(TWITCH_LIVE_KEY, "true") }
         }
@@ -127,6 +129,7 @@ class LiveListener : EventListener {
     }
 
     fun stream(): Map<String, Any?>? {
+        LOG.debug("Starting Twitch Query...")
         val client: String = (getConfig("login")["twitch_key"] as? String) ?: return null
         val response = Unirest.get("https://api.twitch.tv/kraken/streams/$TWITCH_ID") // `65311054` is futureman's twitch id
                 .header("accept", "application/vnd.twitchtv.v5+json")
@@ -181,7 +184,12 @@ class LiveListener : EventListener {
 
             var game = channel["game"] ?. toString() ?: return@embed
 
-            footer { value = game }
+            footer {
+                val img = Assets.TWITCH_FOOTER_ICON
+                value = game
+                if (img !== null)
+                    icon = img
+            }
 
             game = URLEncoder.encode(game, "UTF-8").replace("+", "%20")
 
@@ -190,7 +198,7 @@ class LiveListener : EventListener {
 
     }
 
-    fun live() = System.getProperty(TWITCH_LIVE_KEY, "false").toBoolean()
+
 
     init {
         val priority = (Thread.MAX_PRIORITY + Thread.NORM_PRIORITY) / 2

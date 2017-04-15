@@ -22,6 +22,7 @@ object Assets {
     val MUSIC_EMBED_COLOR: Int get() = Integer.decode(System.getProperty("music.embed.color", "0x50aace"))
 
     val TWITCH_URL: String? get() = System.getProperty("twitch.url")
+    val TWITCH_FOOTER_ICON: String? get() = System.getProperty("twitch.footer.icon")
 
     val SOCIAL_MERCH: String? get() = System.getProperty("social.merch")
     val SOCIAL_TWITTER: String? get() = System.getProperty("social.twitter")
@@ -31,7 +32,8 @@ object Assets {
     val all = mapOf(
         "music.playlist.footer" to MUSIC_PLAYLIST_FOOTER,
         "music.embed.color"     to MUSIC_EMBED_COLOR,
-        "twitch.url"     to TWITCH_URL,
+        "twitch.url"            to TWITCH_URL,
+        "twitch.footer.icon"    to TWITCH_FOOTER_ICON,
         "social.merch"   to SOCIAL_MERCH,
         "social.twitter" to SOCIAL_TWITTER,
         "social.youtube" to SOCIAL_YOUTUBE,
