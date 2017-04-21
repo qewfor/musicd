@@ -59,8 +59,9 @@ class Display(val channel: TextChannel, val remote: PlayerRemote) {
         if (bar !== null) {
             channel.sendEmbedAsync {
                 color { Assets.MUSIC_EMBED_COLOR }
-                this += bar
                 val info = trackInfo()
+                if (!(info?.isStream ?: false))
+                    this += bar
                 if (info !== null) field {
                     name = "Currently Playing"
                     value = String.format("**[%.45s](%s)**", info.title?.mask0() ?: "T/A", info.uri?.mask1())

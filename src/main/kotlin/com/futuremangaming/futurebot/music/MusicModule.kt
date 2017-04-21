@@ -36,11 +36,12 @@ class MusicModule {
     }
 
     val manager: MusicManager = MusicManager()
+    val remotes: MutableMap<Long, PlayerRemote> = mutableMapOf()
 
-    fun remote(guild: Guild): PlayerRemote {
+    fun remote(guild: Guild) = remotes.getOrPut(guild.idLong) {
         val player = manager.getPlayer(guild)
         val queue = manager.getScheduler(guild)
-        return PlayerRemote(player, queue)
+        return PlayerRemote(player, queue, this, guild.idLong)
     }
 
     fun remote(guild: Guild, voiceChannel: VoiceChannel): PlayerRemote {

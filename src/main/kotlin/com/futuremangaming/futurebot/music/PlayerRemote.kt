@@ -25,7 +25,11 @@ import org.apache.commons.lang3.StringUtils
 import java.util.Collections
 import java.util.Queue
 
-class PlayerRemote internal constructor(val player: AudioPlayer, val scheduler: TrackScheduler) {
+class PlayerRemote internal constructor(
+    val player: AudioPlayer,
+    val scheduler: TrackScheduler,
+    val module: MusicModule,
+    val guild: Long) {
 
     var voice: VoiceChannel? = null
         set(value) { scheduler.voice = value }
@@ -69,6 +73,7 @@ class PlayerRemote internal constructor(val player: AudioPlayer, val scheduler: 
     }
 
     fun destroy() {
+        module.remotes.remove(guild)
         scheduler.destroy()
         displays.forEach { it.value.destroy() }
     }
