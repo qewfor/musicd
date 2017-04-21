@@ -16,8 +16,10 @@
 
 package com.futuremangaming.futurebot.music
 
+import com.futuremangaming.futurebot.music.display.Display
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
+import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.VoiceChannel
 import org.apache.commons.lang3.StringUtils
 import java.util.Collections
@@ -31,8 +33,8 @@ class PlayerRemote internal constructor(val player: AudioPlayer, val scheduler: 
         get() = player.isPaused
         set(v) { player.isPaused = v }
 
+    val displays: MutableMap<Long, Display> by lazy { mutableMapOf<Long, Display>() }
     val queue: Queue<AudioTrack> get() = scheduler.queue
-
     val remainingTime: Long get() {
         return queue
                 .asSequence()
@@ -56,6 +58,10 @@ class PlayerRemote internal constructor(val player: AudioPlayer, val scheduler: 
         Collections.shuffle(tracks)
 
         scheduler.queue += tracks
+    }
+
+    fun display(channel: TextChannel) = displays.getOrPut(channel.idLong) {
+        Display(channel, this)
     }
 
     fun removeByName(name: String): Boolean = scheduler.queue.removeAll {

@@ -28,7 +28,7 @@ import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import kotlin.jvm.JvmField as static
 
-fun getMusic() = setOf(Play, Skip, Queue, Shuffle)
+fun getMusic() = setOf(Play, Skip, Queue, Shuffle, NowPlaying)
 
 object Play : MusicCommand("play") {
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
@@ -136,7 +136,17 @@ object Queue : MusicCommand("queue") {
         }
     }
 
-    override fun checkPermission(member: Member): Boolean { return true }
+    override fun checkPermission(member: Member) = true
+}
+
+object NowPlaying : MusicCommand("playing") {
+
+    override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
+        val remote = bot.musicModule.remote(event.guild)
+        remote.display(event.channel).show()
+    }
+
+    override fun checkPermission(member: Member) = true
 }
 
 fun timestamp(time: Long): String {
