@@ -17,6 +17,7 @@
 package com.futuremangaming.futurebot.music.display
 
 import net.dv8tion.jda.core.entities.Member
+import net.dv8tion.jda.core.events.guild.voice.GuildVoiceLeaveEvent
 import net.dv8tion.jda.core.events.message.guild.react.GenericGuildMessageReactionEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
 
@@ -25,6 +26,11 @@ class DisplayAdapter(val display: Display) : ListenerAdapter() {
 
     override fun onGenericGuildMessageReaction(event: GenericGuildMessageReactionEvent) {
         onReaction(event.messageIdLong, event.reactionEmote.name, event.member)
+    }
+
+    override fun onGuildVoiceLeave(event: GuildVoiceLeaveEvent) {
+        if (event.member.user == event.jda.selfUser)
+            display.remote.destroy()
     }
 
     fun onReaction(messageId: Long, reaction: String, mem: Member) {

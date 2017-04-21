@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicLong
 class Display(val channel: TextChannel, val remote: PlayerRemote) {
 
     val listener = DisplayAdapter(this)
-    var message = AtomicLong(0)
+    val message = AtomicLong(0)
 
     init {
         channel.jda.addEventListener(listener)

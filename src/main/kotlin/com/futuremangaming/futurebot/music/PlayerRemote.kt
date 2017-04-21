@@ -70,5 +70,6 @@ class PlayerRemote internal constructor(val player: AudioPlayer, val scheduler: 
 
     fun destroy() {
         scheduler.destroy()
+        displays.forEach { it.value.destroy() }
     }
 }
