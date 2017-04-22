@@ -19,6 +19,7 @@ package com.futuremangaming.futurebot.music
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
+import gnu.trove.map.hash.TLongObjectHashMap
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.VoiceChannel
 
@@ -30,18 +31,21 @@ class MusicModule {
         init {
             PLAYER_MANAGER = DefaultAudioPlayerManager()
             AudioSourceManagers.registerRemoteSources(PLAYER_MANAGER)
-
         }
 
     }
 
     val manager: MusicManager = MusicManager()
-    val remotes: MutableMap<Long, PlayerRemote> = mutableMapOf()
+    val remotes = TLongObjectHashMap<PlayerRemote>()
 
-    fun remote(guild: Guild) = remotes.getOrPut(guild.idLong) {
+    fun remote(guild: Guild): PlayerRemote = if (remotes.containsKey(guild.idLong)) {
+        remotes.get(guild.idLong)
+    }
+    else {
         val player = manager.getPlayer(guild)
         val queue = manager.getScheduler(guild)
-        return PlayerRemote(player, queue, this, guild.idLong)
+        remotes.put(guild.idLong, PlayerRemote(player, queue, this, guild.idLong))
+        remote(guild) // safe recursion
     }
 
     fun remote(guild: Guild, voiceChannel: VoiceChannel): PlayerRemote {

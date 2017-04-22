@@ -72,7 +72,6 @@ class TrackLoadHandler(val trackRequest: TrackRequest) : AudioLoadResultHandler 
         val (remote, id, member, channel, message) = trackRequest
 
         if (playlist.isSearchResult) {
-
             val track = playlist.selectedTrack ?: playlist.tracks.firstOrNull()
             if (track !== null)
                 return trackLoaded(track)
