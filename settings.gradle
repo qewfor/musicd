@@ -1,2 +1,4 @@
 rootProject.name = 'futurebot-discord'
+if (file('../JDA').exists())
+    includeBuild '../JDA'
 
