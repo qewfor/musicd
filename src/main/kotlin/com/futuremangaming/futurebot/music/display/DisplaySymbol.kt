@@ -18,13 +18,13 @@ package com.futuremangaming.futurebot.music.display
 
 // WHY NOT USE AN ENUM?? CONVERSION IS ANNOYING!!
 object DisplaySymbol {
-    val NOTE       = "🎵"
-    val SKIP       = "⏭"
-    val SHUFFLE    = "🔀"
-    val MUTED      = "🔇"
-    val VOLUME_LOW = "🔈"
-    val VOLUME_MED = "🔉"
-    val VOLUME_MAX = "🔊"
-    val PLAY_BAR   = "▬"
-    val PLAY_POS   = "🔘"
+    val NOTE       = "\ud83c\udfb5"
+    val SKIP       = "\u23ed"
+    val SHUFFLE    = "\ud83d\udd00"
+    val MUTED      = "\ud83d\udd07"
+    val VOLUME_LOW = "\ud83d\udd08"
+    val VOLUME_MED = "\ud83d\udd09"
+    val VOLUME_MAX = "\ud83d\udd0A"
+    val PLAY_BAR   = "\u25ac"
+    val PLAY_POS   = "\ud83d\udd18"
 }
