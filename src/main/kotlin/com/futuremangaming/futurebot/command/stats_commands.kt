@@ -18,16 +18,23 @@ package com.futuremangaming.futurebot.command
 
 import com.futuremangaming.futurebot.FutureBot
 import com.futuremangaming.futurebot.internal.AbstractCommand
+import com.futuremangaming.futurebot.internal.CommandGroup
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
 
-object Ping : AbstractCommand("ping", "pong")
+object Ping : AbstractCommand("ping", "pong") {
+    override val group = CommandGroup("Statistics", "stats")
+}
+
 object Uptime : SupplierCommand("uptime", { timeFormat() })
 
 fun getStats() = setOf(Ping, Uptime)
 
 open class SupplierCommand(override val name: String, val supply: () -> String) : AbstractCommand(name, null) {
+
+    override val group = CommandGroup("Statistics", "stats")
+
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
         respond(event.channel, supply.invoke())
     }

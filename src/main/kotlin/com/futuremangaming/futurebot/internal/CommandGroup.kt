@@ -16,14 +16,8 @@
 
 package com.futuremangaming.futurebot.internal
 
-import com.futuremangaming.futurebot.FutureBot
-import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 
-interface Command {
-
-    val name: String
-    val group: CommandGroup
-
-    fun onCommand(args: String, event: GuildMessageReceivedEvent, bot: FutureBot)
-
+data class CommandGroup(val longName: String, val shortName: String) {
+    override fun hashCode() = shortName.hashCode()
+    override fun equals(other: Any?) = other is CommandGroup && shortName == other.shortName
 }

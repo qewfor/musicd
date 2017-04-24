@@ -20,6 +20,7 @@ import club.minnced.kjda.entities.connectedChannel
 import club.minnced.kjda.entities.sendEmbedAsync
 import com.futuremangaming.futurebot.*
 import com.futuremangaming.futurebot.internal.AbstractCommand
+import com.futuremangaming.futurebot.internal.CommandGroup
 import com.futuremangaming.futurebot.music.TrackRequest
 import com.futuremangaming.futurebot.music.delete
 import net.dv8tion.jda.core.entities.Member
@@ -167,6 +168,8 @@ open class MusicCommand(override val name: String) : AbstractCommand(name) {
         val VOICE: String get() = System.getProperty("channel.music.voice") ?: "-1"
         val RESTRICTED: Boolean get() = System.getProperty("app.music.restrict")?.toBoolean() ?: true
     }
+
+    override val group: CommandGroup = CommandGroup("Music", "music")
 
     override fun checkPermission(member: Member): Boolean {
         return (!RESTRICTED || (member.connectedChannel?.id == VOICE && Permissions.isSubscriber(member)))

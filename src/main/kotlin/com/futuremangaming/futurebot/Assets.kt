@@ -29,6 +29,11 @@ object Assets {
     val SOCIAL_YOUTUBE: String? get() = System.getProperty("social.youtube")
     val SOCIAL_TWITCH: String? get() = System.getProperty("social.twitch")
 
+    val PAGES_NEXT: String? get()  = System.getProperty("pages.next")
+    val PAGES_PREV: String? get()  = System.getProperty("pages.prev")
+    val PAGES_LAST: String? get()  = System.getProperty("pages.last")
+    val PAGES_FIRST: String? get() = System.getProperty("pages.first")
+
     val all = mapOf(
         "music.playlist.footer" to MUSIC_PLAYLIST_FOOTER,
         "music.embed.color"     to MUSIC_EMBED_COLOR,
@@ -37,7 +42,11 @@ object Assets {
         "social.merch"   to SOCIAL_MERCH,
         "social.twitter" to SOCIAL_TWITTER,
         "social.youtube" to SOCIAL_YOUTUBE,
-        "social.twitch"  to SOCIAL_TWITCH
+        "social.twitch"  to SOCIAL_TWITCH,
+        "pages.next"  to PAGES_NEXT,
+        "pages.prev"  to PAGES_PREV,
+        "pages.last"  to PAGES_LAST,
+        "pages.first" to PAGES_FIRST
     )
 
     init {

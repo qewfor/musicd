@@ -24,6 +24,8 @@ import com.futuremangaming.futurebot.internal.FutureEventManager
 import com.futuremangaming.futurebot.music.MusicModule
 import com.sedmelluq.discord.lavaplayer.jdaudp.NativeAudioSendFactory
 import net.dv8tion.jda.core.AccountType.BOT
+import net.dv8tion.jda.core.events.ReadyEvent
+import net.dv8tion.jda.core.hooks.ListenerAdapter
 import net.dv8tion.jda.core.utils.SimpleLog
 import java.io.File
 import java.util.Properties
@@ -42,9 +44,15 @@ class FutureBot(token: String) {
         manager { FutureEventManager(true) }
         audioSendFactory { NativeAudioSendFactory() }
 
-        this += CommandManagement(this@FutureBot)
         this += LiveListener()
         this += DisconnectListener
+        this += object : ListenerAdapter() {
+            override fun onReady(event: ReadyEvent) {
+                val mng = CommandManagement(this@FutureBot, event.jda)
+                event.jda.addEventListener(mng)
+                mng.helpers.register(event.jda)
+            }
+        }
     }
 
     init {

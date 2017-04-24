@@ -20,6 +20,7 @@ import club.minnced.kjda.entities.sendEmbedAsync
 import com.futuremangaming.futurebot.Assets
 import com.futuremangaming.futurebot.FutureBot
 import com.futuremangaming.futurebot.internal.AbstractCommand
+import com.futuremangaming.futurebot.internal.CommandGroup
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 
 fun getSocial() = setOf(Merch, Twitter, Youtube, Twitch)
@@ -34,6 +35,8 @@ object Twitch  : SocialCommand("twitch",
     "Follow Futureman on Twitch: [twitch.tv/FuturemanGaming](${Assets.SOCIAL_TWITCH})")
 
 open class SocialCommand(name: String, val description: String) : AbstractCommand(name, null) {
+
+    override val group = CommandGroup("Social Links", "social")
 
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
         event.channel.sendEmbedAsync {

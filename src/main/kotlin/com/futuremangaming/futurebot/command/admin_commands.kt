@@ -23,6 +23,7 @@ import com.futuremangaming.futurebot.FutureBot
 import com.futuremangaming.futurebot.Permissions
 import com.futuremangaming.futurebot.internal.AbstractCommand
 import com.futuremangaming.futurebot.internal.Command
+import com.futuremangaming.futurebot.internal.CommandGroup
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import org.apache.commons.lang3.StringUtils
@@ -32,7 +33,7 @@ import java.util.TreeMap
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 
-fun getAdmin() = setOf<Command>(Eval, Shutdown, Settings, Assetings)
+fun getAdmin() = setOf<Command>(Eval, Shutdown, Settings, Assettings)
 
 object Settings : AdminCommand("set") {
 
@@ -86,7 +87,7 @@ object Settings : AdminCommand("set") {
     }
 }
 
-object Assetings : AdminCommand("asset") {
+object Assettings : AdminCommand("asset") {
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
         if (StringUtils.containsAny(args.toLowerCase(), "--list", "-l")) {
             val props = Assets.all
@@ -183,5 +184,8 @@ object Shutdown : AdminCommand("shutdown") {
 }
 
 open class AdminCommand(override val name: String) : AbstractCommand(name) {
+
+    override val group = CommandGroup("Administration", "admin")
+
     override fun checkPermission(member: Member) = Permissions.isOwner(member)
 }

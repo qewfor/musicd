@@ -19,20 +19,32 @@ package com.futuremangaming.futurebot.internal
 import club.minnced.kjda.entities.div
 import com.futuremangaming.futurebot.FutureBot
 import com.futuremangaming.futurebot.command.*
+import com.futuremangaming.futurebot.command.help.Helpers
+import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.events.Event
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.core.hooks.EventListener
 
-class CommandManagement(val bot: FutureBot) : EventListener {
+class CommandManagement(val bot: FutureBot, val jda: JDA) : EventListener {
 
     val prefix: String get() = System.getProperty("bot.prefix", "!")
+    val helpers = Helpers(this)
 
-    private val commands: Set<Command> =
+    private val commands: Set<Command> = mutableSetOf(helpers.adapter) +
                           getMusic()  + // Music : Play, Skip, Queue, Shuffle
                           getStats()  + // Stats : Ping, Uptime
                           getAdmin()  + // Admin : Eval, Shutdown, Settings
                           getMods()   + // Mods  : Prune, Lock, Unlock, Giveaway, Draw
                           getSocial()   // Social: Merch, Twitter, Youtube, Twitch
+
+    val groups: Map<CommandGroup, List<Command>> by lazy { groups() }
+
+    fun group(shortName: String)
+        = commands.asSequence()
+                  .filter { shortName == it.group.shortName }
+                  .toList()
+
+    private fun groups() = commands.asSequence().groupBy { it.group }
 
     fun onMessage(event: GuildMessageReceivedEvent) {
         if (event.author.isBot) return

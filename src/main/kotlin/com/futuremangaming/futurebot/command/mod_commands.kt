@@ -25,6 +25,7 @@ import com.futuremangaming.futurebot.FutureBot
 import com.futuremangaming.futurebot.Permissions
 import com.futuremangaming.futurebot.getLogger
 import com.futuremangaming.futurebot.internal.AbstractCommand
+import com.futuremangaming.futurebot.internal.CommandGroup
 import com.futuremangaming.futurebot.internal.giveaways.Giveaways
 import com.futuremangaming.futurebot.music.delete
 import net.dv8tion.jda.core.Permission.MESSAGE_MANAGE
@@ -109,6 +110,8 @@ abstract class ModCommand(name: String) : AbstractCommand(name) {
     companion object {
         val LOG = getLogger("Moderation")
     }
+
+    override val group = CommandGroup("Moderation", "mod")
 
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
         LOG.info(String.format("%#s used %s in %#s", event.author, name, event.channel))
