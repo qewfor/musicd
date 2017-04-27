@@ -96,7 +96,9 @@ class Display(val channel: TextChannel, val remote: PlayerRemote) {
 
             val vol = player.volume
 
-            if (vol < 75)
+            if (vol < 10)
+                this += DisplaySymbol.MUTED
+            else if (vol < 75)
                 this += DisplaySymbol.VOLUME_LOW
             else if (vol < 150)
                 this += DisplaySymbol.VOLUME_MED
