@@ -88,6 +88,7 @@ class Display(val channel: TextChannel, val remote: PlayerRemote) {
     internal fun addReactions(message: Message?) {
         if (message == null) return
         this.message.set(message.idLong)
+        message.addReaction(DisplaySymbol.REFRESH).queue()
         message.addReaction(DisplaySymbol.SHUFFLE).queue()
         message.addReaction(DisplaySymbol.SKIP).queue()
         message.addReaction(DisplaySymbol.MUTED).queue()

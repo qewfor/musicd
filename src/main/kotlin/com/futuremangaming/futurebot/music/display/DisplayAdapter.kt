@@ -47,10 +47,13 @@ class DisplayAdapter(val display: Display) : ListenerAdapter() {
             DisplaySymbol.VOLUME_LOW -> player.volume = 50
             DisplaySymbol.VOLUME_MED -> player.volume = 100
             DisplaySymbol.VOLUME_MAX -> player.volume = 150
+            DisplaySymbol.REFRESH    -> nop()
             else -> return
         }
         // On every successful interaction update the display
         display.channel.editMessageById(messageId, display.createMessage()).queue()
     }
+
+    fun nop() {}
 
 }
