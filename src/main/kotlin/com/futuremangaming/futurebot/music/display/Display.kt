@@ -16,9 +16,10 @@
 
 package com.futuremangaming.futurebot.music.display
 
-import club.minnced.kjda.entities.sendEmbedAsync
-import club.minnced.kjda.entities.sendTextAsync
+import club.minnced.kjda.embed
+import club.minnced.kjda.message
 import club.minnced.kjda.plusAssign
+import club.minnced.kjda.then
 import com.futuremangaming.futurebot.Assets
 import com.futuremangaming.futurebot.Permissions
 import com.futuremangaming.futurebot.command.timestamp
@@ -55,25 +56,34 @@ class Display(val channel: TextChannel, val remote: PlayerRemote) {
     }
 
     fun show() {
-        val bar = render()
-        if (bar !== null) {
-            channel.sendEmbedAsync {
-                color { Assets.MUSIC_EMBED_COLOR }
-                val info = trackInfo()
-                if (!(info?.isStream ?: false))
-                    this += bar
-                if (info !== null) field {
-                    name = "Currently Playing"
-                    value = String.format("**[%.45s](%s)**", info.title?.mask0() ?: "T/A", info.uri?.mask1())
-                }
-            } then(this::addReactions)
-        }
-        else {
-            channel.sendTextAsync { "Nothing to display!" }
-        }
+        val message = createMessage()
+        channel.sendMessage(message).then(this::addReactions)
     }
 
     fun trackInfo(): AudioTrackInfo? = remote.player.playingTrack?.info
+
+    fun createMessage(): Message {
+        val bar = render()
+        if (bar !== null) {
+            return message {
+                embed {
+                    color { Assets.MUSIC_EMBED_COLOR }
+                    val info = trackInfo()
+                    if (!(info?.isStream ?: false))
+                        this += bar
+                    if (info !== null) field {
+                        name = "Currently Playing"
+                        value = String.format("**[%.45s](%s)**", info.title?.mask0() ?: "T/A", info.uri?.mask1())
+                    }
+                }
+            }
+        }
+        else {
+            return message {
+                this += "Nothing to display!"
+            }
+        }
+    }
 
     internal fun addReactions(message: Message?) {
         if (message == null) return
