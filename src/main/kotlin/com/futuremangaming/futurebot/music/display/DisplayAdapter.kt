@@ -16,6 +16,7 @@
 
 package com.futuremangaming.futurebot.music.display
 
+import com.futuremangaming.futurebot.Permissions
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceLeaveEvent
 import net.dv8tion.jda.core.events.message.guild.react.GenericGuildMessageReactionEvent
@@ -36,9 +37,16 @@ class DisplayAdapter(val display: Display) : ListenerAdapter() {
     fun onReaction(messageId: Long, reaction: String, mem: Member) {
         if (messageId != display.message.get() || mem.user == mem.jda.selfUser) return
 
+        if (!Permissions.isModerator(mem)) return
+
+        val player = display.remote.player
         when (reaction) {
             DisplaySymbol.SHUFFLE -> display.shuffle(mem)
             DisplaySymbol.SKIP    -> display.skip(mem)
+            DisplaySymbol.MUTED      -> player.volume = 0
+            DisplaySymbol.VOLUME_LOW -> player.volume = 50
+            DisplaySymbol.VOLUME_MED -> player.volume = 100
+            DisplaySymbol.VOLUME_MAX -> player.volume = 150
         }
     }
 

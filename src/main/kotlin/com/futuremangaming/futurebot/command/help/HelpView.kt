@@ -140,7 +140,7 @@ class HelpView(channel: TextChannel) {
         if (!isFirst) msg.addReaction(Assets.PAGES_FIRST) then {
             msg.addReaction(Assets.PAGES_PREV) then {
                 if (!isLast) {
-                    msg.addReaction(Assets.PAGES_NEXT).complete()
+                    msg.addReaction(Assets.PAGES_NEXT).queue()
                     msg.addReaction(Assets.PAGES_LAST).queue()
                 }
             }

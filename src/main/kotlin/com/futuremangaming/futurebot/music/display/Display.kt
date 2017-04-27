@@ -19,7 +19,6 @@ package com.futuremangaming.futurebot.music.display
 import club.minnced.kjda.entities.sendEmbedAsync
 import club.minnced.kjda.entities.sendTextAsync
 import club.minnced.kjda.plusAssign
-import club.minnced.kjda.then
 import com.futuremangaming.futurebot.Assets
 import com.futuremangaming.futurebot.Permissions
 import com.futuremangaming.futurebot.command.timestamp
@@ -28,6 +27,7 @@ import com.futuremangaming.futurebot.mask1
 import com.futuremangaming.futurebot.music.PlayerRemote
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo
 import net.dv8tion.jda.core.entities.Member
+import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.TextChannel
 import java.util.concurrent.atomic.AtomicLong
 
@@ -66,14 +66,7 @@ class Display(val channel: TextChannel, val remote: PlayerRemote) {
                     name = "Currently Playing"
                     value = String.format("**[%.45s](%s)**", info.title?.mask0() ?: "T/A", info.uri?.mask1())
                 }
-            } then {
-                message.set(it?.idLong ?: message.get())
-                if (it !== null) {
-                    it.addReaction(DisplaySymbol.SHUFFLE) then {
-                        it.addReaction(DisplaySymbol.SKIP).queue()
-                    }
-                }
-            }
+            } then(this::addReactions)
         }
         else {
             channel.sendTextAsync { "Nothing to display!" }
@@ -81,6 +74,17 @@ class Display(val channel: TextChannel, val remote: PlayerRemote) {
     }
 
     fun trackInfo(): AudioTrackInfo? = remote.player.playingTrack?.info
+
+    internal fun addReactions(message: Message?) {
+        if (message == null) return
+        this.message.set(message.idLong)
+        message.addReaction(DisplaySymbol.SHUFFLE).queue()
+        message.addReaction(DisplaySymbol.SKIP).queue()
+        message.addReaction(DisplaySymbol.MUTED).queue()
+        message.addReaction(DisplaySymbol.VOLUME_LOW).queue()
+        message.addReaction(DisplaySymbol.VOLUME_MED).queue()
+        message.addReaction(DisplaySymbol.VOLUME_MAX).queue()
+    }
 
     internal fun render(): String? {
         val player = remote.player
