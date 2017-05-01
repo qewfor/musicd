@@ -22,6 +22,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.VoiceChannel
 import org.apache.commons.lang3.StringUtils
+import org.slf4j.LoggerFactory
 import java.util.Collections
 import java.util.Queue
 
@@ -30,6 +31,14 @@ class PlayerRemote internal constructor(
     val scheduler: TrackScheduler,
     val module: MusicModule,
     val guild: Long) {
+
+    companion object {
+        val LOG = LoggerFactory.getLogger(PlayerRemote::class.java)!!
+    }
+
+    init {
+        LOG.debug("Created PlayerRemote in Guild with ID: {}", guild)
+    }
 
     var voice: VoiceChannel? = null
         set(value) { scheduler.voice = value }
@@ -47,13 +56,17 @@ class PlayerRemote internal constructor(
     }
 
     fun handleRequest(request: TrackRequest, allowLive: Boolean = false) {
+        LOG.trace(String.format("Handling Request for ID: %s |> Requested by: %#s", request.id, request.member.user))
         val handler = TrackLoadHandler(request)
         handler.allowLive = allowLive
 
         MusicModule.PLAYER_MANAGER.loadItemOrdered(this, request.id, handler)
     }
 
-    fun skipTrack() = scheduler.nextTrack(true)
+    fun skipTrack(): Boolean {
+        LOG.trace("Skipping Track")
+        return scheduler.nextTrack(true)
+    }
 
     fun shuffle() = synchronized(scheduler.queue) {
         val tracks = queue.toMutableList()
@@ -65,7 +78,8 @@ class PlayerRemote internal constructor(
     }
 
     fun display(channel: TextChannel) = displays.getOrPut(channel.idLong) {
-        Display(channel, this)
+        LOG.debug("Created new Display (!playing) in #{}.", channel.name)
+        return@getOrPut Display(channel, this)
     }
 
     fun removeByName(name: String): Boolean = scheduler.queue.removeAll {
@@ -73,6 +87,7 @@ class PlayerRemote internal constructor(
     }
 
     fun destroy() {
+        LOG.debug("Deconstructing Remote for Guild with ID: {}", guild)
         module.remotes.remove(guild)
         scheduler.destroy()
         displays.forEach { it.value.destroy() }

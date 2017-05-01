@@ -43,7 +43,7 @@ class FutureEventManager(val async: Boolean) : IEventManager {
     }
 
     override fun unregister(listener: Any?) {
-        listeners += (listener as? EventListener ?: throw IllegalArgumentException())
+        listeners -= (listener as? EventListener ?: throw IllegalArgumentException())
     }
 
     init {
