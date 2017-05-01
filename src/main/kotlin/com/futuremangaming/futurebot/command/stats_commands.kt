@@ -16,6 +16,8 @@
 @file:JvmName("StatCommands")
 package com.futuremangaming.futurebot.command
 
+import club.minnced.kjda.entities.editTextAsync
+import club.minnced.kjda.entities.sendTextAsync
 import com.futuremangaming.futurebot.FutureBot
 import com.futuremangaming.futurebot.internal.AbstractCommand
 import com.futuremangaming.futurebot.internal.CommandGroup
@@ -23,8 +25,21 @@ import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
 
-object Ping : AbstractCommand("ping", "pong") {
+object Ping : AbstractCommand("ping", null) {
     override val group = CommandGroup("Statistics", "stats")
+
+    override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
+        val time = System.currentTimeMillis()
+        event.channel.sendTextAsync {
+            "Pong!"
+        } then {
+            it?.editTextAsync {
+                String.format("Message Ping: **%d**ms\nWebSocket Ping: **%d**ms",
+                        System.currentTimeMillis() - time, event.jda.ping)
+            }
+        }
+
+    }
 }
 
 object Uptime : SupplierCommand("uptime", { timeFormat() })
