@@ -64,22 +64,21 @@ class Display(val channel: TextChannel, val remote: PlayerRemote) {
 
     fun createMessage(): Message {
         val bar = render()
-        if (bar !== null) {
-            return message {
-                embed {
-                    color { Assets.MUSIC_EMBED_COLOR }
-                    val info = trackInfo()
-                    if (!(info?.isStream ?: false))
-                        this += bar
-                    if (info !== null) field {
-                        name = "Currently Playing"
-                        value = String.format("**[%.45s](%s)**", info.title?.mask0() ?: "T/A", info.uri?.mask1())
-                    }
+        if (bar !== null) return message {
+            embed {
+                color { Assets.MUSIC_EMBED_COLOR }
+                val info = trackInfo()
+                if (!(info?.isStream ?: false))
+                    this += bar
+                if (info !== null) field {
+                    name = "Currently Playing"
+                    value = String.format("**[%.45s](%s)**", info.title?.mask0() ?: "T/A", info.uri?.mask1())
                 }
             }
         }
-        else {
-            return message {
+        else return message {
+            embed {
+                color { Assets.MUSIC_EMBED_COLOR }
                 this += "Nothing to display!"
             }
         }
