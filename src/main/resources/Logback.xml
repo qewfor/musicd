@@ -22,7 +22,7 @@
         </encoder>
     </appender>
 
-    <logger name="com.futuremangaming.futurebot.music.PlayerRemote" level="trace" />
+    <logger name="com.futuremangaming.futurebot.music.PlayerRemote" level="info" />
 
     <root level="info">
         <appender-ref ref="STDOUT" />

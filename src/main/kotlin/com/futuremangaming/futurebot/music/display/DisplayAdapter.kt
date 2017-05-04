@@ -17,6 +17,7 @@
 package com.futuremangaming.futurebot.music.display
 
 import com.futuremangaming.futurebot.Permissions
+import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceLeaveEvent
 import net.dv8tion.jda.core.events.message.guild.react.GenericGuildMessageReactionEvent
@@ -40,18 +41,30 @@ class DisplayAdapter(val display: Display) : ListenerAdapter() {
         if (!Permissions.isModerator(mem)) return
 
         val player = display.remote.player
+        val volume = player.volume
         when (reaction) {
-            DisplaySymbol.SHUFFLE -> display.shuffle(mem)
-            DisplaySymbol.SKIP    -> display.skip(mem)
-            DisplaySymbol.MUTED      -> player.volume = 0
-            DisplaySymbol.VOLUME_LOW -> player.volume = 50
-            DisplaySymbol.VOLUME_MED -> player.volume = 100
-            DisplaySymbol.VOLUME_MAX -> player.volume = 150
-            DisplaySymbol.REFRESH    -> nop()
-            else -> return
+            DisplaySymbol.SHUFFLE     -> display.shuffle(mem)
+            DisplaySymbol.SKIP        -> display.skip(mem)
+            DisplaySymbol.MUTED       -> player.volume = 0
+            DisplaySymbol.VOLUME_DOWN -> decVolume(player, volume)
+            DisplaySymbol.VOLUME_UP   -> incVolume(player, volume)
+            DisplaySymbol.REFRESH     -> nop()
+            else                      -> return
         }
         // On every successful interaction update the display
         display.channel.editMessageById(messageId, display.createMessage()).queue()
+    }
+
+    fun incVolume(player: AudioPlayer, vol: Int)
+    {
+        if (vol <= 140)
+            player.volume += 10
+    }
+
+    fun decVolume(player: AudioPlayer, vol: Int)
+    {
+        if (vol >= 10)
+            player.volume -= 10
     }
 
     fun nop() {}

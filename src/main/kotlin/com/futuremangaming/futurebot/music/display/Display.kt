@@ -70,9 +70,12 @@ class Display(val channel: TextChannel, val remote: PlayerRemote) {
                 val info = trackInfo()
                 if (!(info?.isStream ?: false))
                     this += bar
-                if (info !== null) field {
+                if (info !== null)field {
+                    name = "Volume"
+                    value = "`${remote.player.volume}`/`150`"
+                } field {
                     name = "Currently Playing"
-                    value = String.format("**[%.45s](%s)**", info.title?.mask0() ?: "T/A", info.uri?.mask1())
+                    value = String.format("**[%.30s](%s)**", info.title?.mask0() ?: "T/A", info.uri?.mask1())
                 }
             }
         }
@@ -91,9 +94,8 @@ class Display(val channel: TextChannel, val remote: PlayerRemote) {
         message.addReaction(DisplaySymbol.SHUFFLE).queue()
         message.addReaction(DisplaySymbol.SKIP).queue()
         message.addReaction(DisplaySymbol.MUTED).queue()
-        message.addReaction(DisplaySymbol.VOLUME_LOW).queue()
-        message.addReaction(DisplaySymbol.VOLUME_MED).queue()
-        message.addReaction(DisplaySymbol.VOLUME_MAX).queue()
+        message.addReaction(DisplaySymbol.VOLUME_DOWN).queue()
+        message.addReaction(DisplaySymbol.VOLUME_UP).queue()
     }
 
     internal fun render(): String? {
@@ -111,13 +113,13 @@ class Display(val channel: TextChannel, val remote: PlayerRemote) {
             else if (vol < 75)
                 this += DisplaySymbol.VOLUME_LOW
             else if (vol < 150)
-                this += DisplaySymbol.VOLUME_MED
+                this += DisplaySymbol.VOLUME_DOWN //aka mid
             else
-                this += DisplaySymbol.VOLUME_MAX
+                this += DisplaySymbol.VOLUME_UP //aka max
 
             val p1 = (track.position / info.length.toDouble()) // convert to double to get actual value
             val p2 = p1 * 10
-            val position = Math.round(p2).toInt()
+            val position = Math.floor(p2).toInt()
 
             repeat(10) {
                 if (it == position)
