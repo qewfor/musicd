@@ -187,5 +187,5 @@ open class AdminCommand(override val name: String) : AbstractCommand(name) {
 
     override val group = CommandGroup("Administration", "admin")
 
-    override fun checkPermission(member: Member) = Permissions.isOwner(member)
+    override fun checkPermission(member: Member) = Permissions.isAdmin(member)
 }
