@@ -40,7 +40,7 @@ object Settings : AdminCommand("set") {
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
         if (StringUtils.containsAny(args.toLowerCase(), "--list", "-l")) {
             val props = Properties()
-            val reader = File("default.properties").reader()
+            val reader = File("default.properties").inputStream()
             props.load(reader)
             reader.close()
 
@@ -119,19 +119,19 @@ object Assettings : AdminCommand("asset") {
         if (!args.contains(" ")) {
             if (!args.isEmpty() && System.getProperty(args) !== null) {
                 System.getProperties().remove(args)
-                return Settings.respond(event.channel, "Removed Property `$args`!")
+                return respond(event.channel, "Removed Property `$args`!")
             }
             else {
-                return Settings.respond(event.channel, "No such property `$args`!")
+                return respond(event.channel, "No such property `$args`!")
             }
         }
 
         val (key, value) = args / 2
         val old = System.setProperty(key, value)
         if (old === null)
-            Settings.respond(event.channel, "Set property `$key` to `$value`")
+            respond(event.channel, "Set property `$key` to `$value`")
         else
-            Settings.respond(event.channel, "Changed property `$key` from `$old` to `$value`")
+            respond(event.channel, "Changed property `$key` from `$old` to `$value`")
     }
 }
 

@@ -18,6 +18,7 @@ package com.futuremangaming.futurebot
 
 import net.dv8tion.jda.core.Permission.ADMINISTRATOR
 import net.dv8tion.jda.core.Permission.BAN_MEMBERS
+import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.Role
 
@@ -35,23 +36,23 @@ object Permissions {
     val SUB_ROLE: String get() = System.getProperty(SUB_ROLE_KEY) ?: "-1"
     val TWITCH_USER: String get() =  System.getProperty(TWITCH_USER_KEY) ?: "-1"
 
-    fun isSubscriber(member: Member): Boolean {
-        val subRole = member.guild.getRoleById(SUB_ROLE)
+    fun isSubscriber(member: Member, guild: Guild = member.guild): Boolean {
+        val subRole = guild.getRoleById(SUB_ROLE)
         return hasRole(member, subRole) || isModerator(member)
     }
 
-    fun isModerator(member: Member): Boolean {
+    fun isModerator(member: Member, guild: Guild = member.guild): Boolean {
         if (isAdmin(member) || member.hasPermission(BAN_MEMBERS))
             return true
 
-        val modRole = member.guild.getRoleById(MOD_ROLE)
+        val modRole = guild.getRoleById(MOD_ROLE)
         return hasRole(member, modRole)
     }
 
-    fun isAdmin(member: Member): Boolean {
+    fun isAdmin(member: Member, guild: Guild = member.guild): Boolean {
         if (isOwner(member) || member.hasPermission(ADMINISTRATOR))
             return true
-        val adminRole = member.guild.getRoleById(ADMIN_ROLE)
+        val adminRole = guild.getRoleById(ADMIN_ROLE)
         return hasRole(member, adminRole)
     }
 

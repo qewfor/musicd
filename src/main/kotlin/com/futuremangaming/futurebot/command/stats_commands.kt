@@ -34,8 +34,8 @@ object Ping : AbstractCommand("ping", null) {
             "Pong!"
         } then {
             it?.editTextAsync {
-                String.format("Message Ping: **%d**ms\nWebSocket Ping: **%d**ms",
-                        System.currentTimeMillis() - time, event.jda.ping)
+                "Message Ping: **%d**ms\nWebSocket Ping: **%d**ms"
+                    .format(System.currentTimeMillis() - time, event.jda.ping)
             }
         }
 

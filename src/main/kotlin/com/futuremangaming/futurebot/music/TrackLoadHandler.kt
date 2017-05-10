@@ -43,7 +43,7 @@ class TrackLoadHandler(val trackRequest: TrackRequest) : AudioLoadResultHandler 
     override fun trackLoaded(track: AudioTrack?) {
         if (track === null) return
         val (remote, id, member, channel, message) = trackRequest
-        delete(message)
+        message.delete("Track(s) loaded for %#s", member.user)
         val info = track.info
         if (info.isStream) {
             if (!allowLive) {
@@ -75,12 +75,12 @@ class TrackLoadHandler(val trackRequest: TrackRequest) : AudioLoadResultHandler 
             val track = playlist.selectedTrack ?: playlist.tracks.firstOrNull()
             if (track !== null)
                 return trackLoaded(track)
-            delete(message)
+            message.delete("No Matches for %#s", member.user)
 
             return send(channel, "Unable to find anything for `${id.replaceFirst("ytsearch:", "")}`!")
         }
 
-        delete(message)
+        message.delete("Loaded Playlist for %#s", member.user)
         channel.sendTyping() then {
 
             for (track in playlist.tracks)

@@ -33,18 +33,20 @@ fun getMusic() = setOf(Play, Skip, Queue, Shuffle, NowPlaying)
 
 object Play : MusicCommand("play") {
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
-        if (args.isBlank())
-            return respond(event.channel, "Provide a link or id to a track resource!")
-
+        val channel = event.channel
         val member = event.member
-        val voice = event.guild.getVoiceChannelById(VOICE)
+        val guild = event.guild
+        if (args.isBlank())
+            return respond(channel, "Provide a link or id to a track resource!")
+
+        val voice = guild.getVoiceChannelById(VOICE)
                 ?: event.member.connectedChannel
-                ?: return respond(event.channel, "There is no voice channel specified. Contact the host!")
-        val remote = bot.musicModule.remote(event.guild, voice)
+                ?: return respond(channel, "There is no voice channel specified. Contact the host!")
+        val remote = bot.musicModule.remote(guild, voice)
         val isMod = Permissions.isModerator(member)
 
-        val identifier = if (args.startsWith("http")) args else "ytsearch:$args"
-        remote.handleRequest(TrackRequest(remote, identifier, member, event.channel, event.message), isMod)
+        val identifier = if (args.startsWith("http") || args.startsWith("ytsearch:")) args else "ytsearch:$args"
+        remote.handleRequest(TrackRequest(remote, identifier, member, channel, event.message), isMod)
     }
 }
 
@@ -64,7 +66,7 @@ object Skip : MusicCommand("skip") {
 
         respond(event.channel, "${member.asMention} skipped current track!")
 
-        delete(event.message)
+        event.message.delete("Music Cleanup")
     }
 }
 

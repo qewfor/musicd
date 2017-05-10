@@ -16,6 +16,7 @@
 @file:JvmName("Music")
 package com.futuremangaming.futurebot.music
 
+import club.minnced.kjda.catch
 import club.minnced.kjda.entities.sendTextAsync
 import com.futuremangaming.futurebot.getLogger
 import net.dv8tion.jda.core.entities.Member
@@ -34,12 +35,10 @@ data class TrackRequest(
     val message: Message
 )
 
-fun delete(message: Message) {
-    try {
-        message.delete().queue()
-    }
-    catch (ex: PermissionException) { }
+fun Message.delete(formatReason: String, vararg args: Any) = try {
+    delete().reason(formatReason.format(*args)) catch { }
 }
+catch (ex: PermissionException) { }
 
 fun send(channel: MessageChannel, msg: String) {
     try {

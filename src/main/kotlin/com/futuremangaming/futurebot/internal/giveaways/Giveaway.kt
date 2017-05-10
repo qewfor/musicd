@@ -25,6 +25,7 @@ import gnu.trove.list.array.TLongArrayList
 import net.dv8tion.jda.core.Permission.MESSAGE_MANAGE
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.TextChannel
+import net.dv8tion.jda.core.entities.User
 import java.security.SecureRandom
 
 class Giveaway(val channel: TextChannel) { // actual giveaway

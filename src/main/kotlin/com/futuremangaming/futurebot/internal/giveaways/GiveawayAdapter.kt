@@ -17,9 +17,7 @@
 package com.futuremangaming.futurebot.internal.giveaways
 
 import com.futuremangaming.futurebot.Permissions
-import com.futuremangaming.futurebot.internal.giveaways.Giveaways
 import net.dv8tion.jda.core.entities.TextChannel
-import net.dv8tion.jda.core.events.message.react.GenericMessageReactionEvent
 import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.core.events.message.react.MessageReactionRemoveAllEvent
 import net.dv8tion.jda.core.events.message.react.MessageReactionRemoveEvent
@@ -27,12 +25,8 @@ import net.dv8tion.jda.core.hooks.ListenerAdapter
 
 class GiveawayAdapter(val giveaway: Giveaway) : ListenerAdapter() {
 
-    override fun onGenericMessageReaction(event: GenericMessageReactionEvent?) {
-        super.onGenericMessageReaction(event)
-    }
-
     override fun onMessageReactionRemoveAll(event: MessageReactionRemoveAllEvent) {
-        val id = event.messageId.toLong()
+        val id = event.messageIdLong
         if (id != giveaway.message) return
 
         giveaway.reset(id)
@@ -41,7 +35,7 @@ class GiveawayAdapter(val giveaway: Giveaway) : ListenerAdapter() {
     override fun onMessageReactionAdd(event: MessageReactionAddEvent) {
         if (event.user == event.jda.selfUser) return
         val id = event.user.idLong
-        val messageId = event.messageId.toLong()
+        val messageId = event.messageIdLong
         val react = event.reaction.emote.id ?: event.reaction.emote.name
 
         val channel = event.channel as? TextChannel ?: return
@@ -63,7 +57,7 @@ class GiveawayAdapter(val giveaway: Giveaway) : ListenerAdapter() {
     override fun onMessageReactionRemove(event: MessageReactionRemoveEvent) {
         if (event.user == event.jda.selfUser) return
         val id = event.user.idLong
-        val messageId = event.messageId.toLong()
+        val messageId = event.messageIdLong
 
         if (messageId != giveaway.message) return
         if (event.reaction.emote.id ?: event.reaction.emote.name != giveaway.join) return

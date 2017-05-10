@@ -21,6 +21,7 @@ import club.minnced.kjda.entities.editAsync
 import club.minnced.kjda.entities.sendTextAsync
 import club.minnced.kjda.plusAssign
 import club.minnced.kjda.then
+import com.futuremangaming.futurebot.Assets
 import com.futuremangaming.futurebot.FutureBot
 import com.futuremangaming.futurebot.Permissions
 import com.futuremangaming.futurebot.getLogger
@@ -40,12 +41,13 @@ fun getMods() = setOf(PruneCommand, GiveawayCommand, DrawCommand)
 /** Clears `X` messages */
 object PruneCommand : ModCommand("prune") {
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
+        val reason = "Prune by %#s".format(event.author)
         event.channel.history.retrievePast(100) then {
             val messages = this?.filter { ChronoUnit.WEEKS.between(it.creationTime, OffsetDateTime.now()) < 2 }!!
             if (messages.size > 1)
-                event.channel.deleteMessages(messages).queue()
+                event.channel.deleteMessages(messages).reason(reason).queue()
             else
-                delete(messages.first())
+                messages.first().delete(reason)
             respond(event.channel, "${event.author.asMention} pruned **${messages.size} message(s)** in this channel.")
         }
         super.onVerified(args, event, bot)
@@ -79,6 +81,8 @@ object GiveawayCommand : ModCommand("giveaway") {
             sub = false
         }
 
+        val author = event.author
+        val message = event.message
         val enter = Giveaways.ENTER_EMOJI
         val close = Giveaways.CLOSE_EMOJI
         val msg = ga.open(enter = enter, close = close, sub = sub)
@@ -86,9 +90,9 @@ object GiveawayCommand : ModCommand("giveaway") {
             this += "Giving away **$prize**! React with $enter to join and $close to close!"
             if (sub) embed {
                 this += "👉🏽 This giveaway is only for subscribers!"
-                color { 0x50aace }
+                color { Assets.MUSIC_EMBED_COLOR }
             }
-        } then { delete(event.message) }
+        } then { message.delete("Giveaway started by %#s", author) }
         super.onVerified(args, event, bot)
     }
 
@@ -96,11 +100,12 @@ object GiveawayCommand : ModCommand("giveaway") {
 
 object DrawCommand : ModCommand("draw") {
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
-        val ga = Giveaways.giveFor(event.channel)
-        if (ga.entrySize() < 1) return respond(event.channel, "Not enough people entered to draw a winner!")
+        val channel = event.channel
+        val ga = Giveaways.giveFor(channel)
+        if (ga.entrySize() < 1) return respond(channel, "Not enough people entered to draw a winner!")
 
         val winner = ga.pollWinner()
-        respond(event.channel, "Aaand the winner is ${event.jda.getUserById(winner).asMention}! 🎊 Congratulations 🎊")
+        respond(channel, "Aaand the winner is ${event.jda.getUserById(winner).asMention}! 🎊 Congratulations 🎊")
         super.onVerified(args, event, bot)
     }
 }
@@ -114,7 +119,7 @@ abstract class ModCommand(name: String) : AbstractCommand(name) {
     override val group = CommandGroup("Moderation", "mod")
 
     override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
-        LOG.info(String.format("%#s used %s in %#s", event.author, name, event.channel))
+        LOG.info("%#s used %s in %#s".format(event.author, name, event.channel))
     }
 
     override fun checkPermission(member: Member) = Permissions.isModerator(member)
