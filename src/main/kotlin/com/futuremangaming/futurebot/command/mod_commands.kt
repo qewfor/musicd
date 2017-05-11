@@ -19,8 +19,8 @@ package com.futuremangaming.futurebot.command
 import club.minnced.kjda.embed
 import club.minnced.kjda.entities.editAsync
 import club.minnced.kjda.entities.sendTextAsync
+import club.minnced.kjda.get
 import club.minnced.kjda.plusAssign
-import club.minnced.kjda.then
 import com.futuremangaming.futurebot.Assets
 import com.futuremangaming.futurebot.FutureBot
 import com.futuremangaming.futurebot.Permissions
@@ -29,28 +29,42 @@ import com.futuremangaming.futurebot.internal.AbstractCommand
 import com.futuremangaming.futurebot.internal.CommandGroup
 import com.futuremangaming.futurebot.internal.giveaways.Giveaways
 import com.futuremangaming.futurebot.music.delete
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.CoroutineScope
+import kotlinx.coroutines.experimental.launch
 import net.dv8tion.jda.core.Permission.MESSAGE_MANAGE
 import net.dv8tion.jda.core.entities.Member
+import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
+import java.util.stream.Collectors
 
 fun getMods() = setOf(PruneCommand, GiveawayCommand, DrawCommand)
 
 /** Clears `X` messages */
 object PruneCommand : ModCommand("prune") {
-    override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
+    override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) = start {
         val reason = "Prune by %#s".format(event.author)
-        event.channel.history.retrievePast(100) then {
-            val messages = this?.filter { ChronoUnit.WEEKS.between(it.creationTime, OffsetDateTime.now()) < 2 }!!
-            if (messages.size > 1)
-                event.channel.deleteMessages(messages).reason(reason).queue()
-            else
-                messages.first().delete(reason)
-            respond(event.channel, "${event.author.asMention} pruned **${messages.size} message(s)** in this channel.")
-        }
+        val channel = event.channel
+        val messages =
+            channel.iterableHistory.get()!!.stream()
+                .limit(100)
+                .filter { ChronoUnit.WEEKS.between(it.creationTime, OffsetDateTime.now()) < 2 }
+                .collect(Collectors.toList<Message>())
+
+        if (messages.size > 1)
+            channel.deleteMessages(messages).reason(reason).queue()
+        else
+            messages.first().delete(reason)
+
+        respond(channel, "%s pruned **%d message(s)** in this channel.".format(event.author, messages.size))
         super.onVerified(args, event, bot)
+    }
+
+    private fun start(block: suspend CoroutineScope.() -> Unit) {
+        launch(CommonPool, block = block)
     }
 
     override fun checkPermission(channel: TextChannel): Boolean {
