@@ -45,12 +45,13 @@ fun getMods() = setOf(PruneCommand, GiveawayCommand, DrawCommand)
 
 /** Clears `X` messages */
 object PruneCommand : ModCommand("prune") {
-    override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) = start {
+    override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) = start(event) {
         val reason = "Prune by %#s".format(event.author)
         val channel = event.channel
+        val limit = if (args.isEmpty()) 50 else maxOf(2, minOf(100, args.toInt()))
         val messages =
             channel.iterableHistory.get()!!.stream()
-                .limit(100)
+                .limit(limit.toLong())
                 .filter { ChronoUnit.WEEKS.between(it.creationTime, OffsetDateTime.now()) < 2 }
                 .collect(Collectors.toList<Message>())
 
@@ -63,8 +64,17 @@ object PruneCommand : ModCommand("prune") {
         super.onVerified(args, event, bot)
     }
 
-    private fun start(block: suspend CoroutineScope.() -> Unit) {
-        launch(CommonPool, block = block)
+    private fun start(event: GuildMessageReceivedEvent, block: suspend CoroutineScope.() -> Unit) {
+        launch(CommonPool) {
+            try {
+                block()
+            }
+            catch (ex: NumberFormatException) {
+                event.channel.sendTextAsync {
+                    "You have to provide a valid number between 2-100 in order to prune messages."
+                }
+            }
+        }
     }
 
     override fun checkPermission(channel: TextChannel): Boolean {
