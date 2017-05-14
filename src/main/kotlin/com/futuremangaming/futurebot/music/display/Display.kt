@@ -75,7 +75,7 @@ class Display(val channel: TextChannel, val remote: PlayerRemote) {
                     value = "`${remote.player.volume}`/`150`"
                 } field {
                     name = "Currently Playing"
-                    value = String.format("**[%.30s](%s)**", info.title?.mask0() ?: "T/A", info.uri?.mask1())
+                    value = "**[%.30s](%s)**".format(info.title?.mask0() ?: "T/A", info.uri?.mask1())
                 }
             }
         }

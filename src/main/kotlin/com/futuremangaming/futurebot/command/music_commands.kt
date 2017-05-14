@@ -103,7 +103,7 @@ object Queue : MusicCommand("queue") {
 
             if (info.isStream) {
                 val title = info.title
-                this += String.format("🎥 **Live** [%s](%s)",
+                this += "🎥 **Live** [%s](%s)".format(
                         (if (title.length >= 40) "${title.substring(0..37)}..." else title).mask0(), info.uri.mask1())
                 return@sendEmbedAsync
             }
@@ -126,7 +126,7 @@ object Queue : MusicCommand("queue") {
                     val song = queue[i]
                     info = song.info
                     val title = info.title
-                    lines += String.format("`%d.` **[%s](%s)** [`%s`]", i + 1,
+                    lines += "`%d.` **[%s](%s)** [`%s`]".format(i + 1,
                             (if (title.length >= 40) "${title.substring(0..37)}..." else title).mask0(), info.uri.mask1(),
                             if (info.isStream) "live" else timestamp(info.length))
                 }
@@ -159,9 +159,9 @@ fun timestamp(time: Long): String {
     val seconds = u.toSeconds(time) % 60
 
     if (hours > 0)
-        return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+        return "%02d:%02d:%02d".format(hours, minutes, seconds)
     else
-        return String.format("%02d:%02d", minutes, seconds)
+        return "%02d:%02d".format(minutes, seconds)
 }
 
 open class MusicCommand(override val name: String) : AbstractCommand(name) {

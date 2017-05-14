@@ -58,7 +58,7 @@ object Settings : AdminCommand("set") {
                 }
                 val list = mutableMap.map { entry ->
                     val (key, value) = entry
-                    String.format("%-${longestKey}s: %${longestVal}s", key, value)
+                    "%-${longestKey}s: %${longestVal}s".format(key, value)
                 }
 
                 this += "```ldif\n"
@@ -106,7 +106,7 @@ object Assettings : AdminCommand("asset") {
                 }
                 val list = mutableMap.map { entry ->
                     val (key, value) = entry
-                    String.format("%-${longestKey}s: %${longestVal}s", key, value)
+                    "%-${longestKey}s: %${longestVal}s".format(key, value)
                 }
 
                 this += "```ldif\n"

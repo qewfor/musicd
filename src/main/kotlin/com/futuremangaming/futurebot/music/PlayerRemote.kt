@@ -56,7 +56,7 @@ class PlayerRemote internal constructor(
     }
 
     fun handleRequest(request: TrackRequest, allowLive: Boolean = false) {
-        LOG.trace(String.format("Handling Request for ID: %s |> Requested by: %#s", request.id, request.member.user))
+        LOG.trace("Handling Request for ID: %s |> Requested by: %#s".format(request.id, request.member.user))
         val handler = TrackLoadHandler(request)
         handler.allowLive = allowLive
 
