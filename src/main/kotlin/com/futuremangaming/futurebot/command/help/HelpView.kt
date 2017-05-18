@@ -18,11 +18,9 @@ package com.futuremangaming.futurebot.command.help
 
 import club.minnced.kjda.builders.KEmbedBuilder
 import club.minnced.kjda.builders.embed
-import club.minnced.kjda.then
 import com.futuremangaming.futurebot.Assets
 import com.futuremangaming.futurebot.internal.CommandManagement
 import net.dv8tion.jda.core.JDA
-import net.dv8tion.jda.core.Permission.MESSAGE_MANAGE
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.requests.RestAction
@@ -125,29 +123,19 @@ class HelpView(channel: TextChannel) {
 
             action?.queue { msg ->
                 if (msg !== null)
-                    addReactions(msg, isLast = page == groups.size - 1, isFirst = page == -1)
+                    addReactions(msg)
             }
         }
     }
 
     fun destroy() = true
 
-    fun addReactions(msg: Message, isLast: Boolean, isFirst: Boolean) {
-        if (msg.reactions.isNotEmpty() && msg.guild.selfMember.hasPermission(msg.textChannel, MESSAGE_MANAGE))
-            msg.clearReactions().complete() // Clear messages before adding pagination
-
+    fun addReactions(msg: Message) {
         message.set(msg.idLong)
-        if (!isFirst) msg.addReaction(Assets.PAGES_FIRST) then {
-            msg.addReaction(Assets.PAGES_PREV) then {
-                if (!isLast) {
-                    msg.addReaction(Assets.PAGES_NEXT).queue()
-                    msg.addReaction(Assets.PAGES_LAST).queue()
-                }
-            }
-        }
-        else msg.addReaction(Assets.PAGES_NEXT) then {
-            msg.addReaction(Assets.PAGES_LAST).queue()
-        }
+        msg.addReaction(Assets.PAGES_FIRST).queue()
+        msg.addReaction(Assets.PAGES_PREV).queue()
+        msg.addReaction(Assets.PAGES_NEXT).queue()
+        msg.addReaction(Assets.PAGES_LAST).queue()
     }
 
 }
