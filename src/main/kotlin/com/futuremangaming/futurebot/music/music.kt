@@ -19,6 +19,11 @@ package com.futuremangaming.futurebot.music
 import club.minnced.kjda.catch
 import club.minnced.kjda.entities.sendTextAsync
 import com.futuremangaming.futurebot.getLogger
+import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
+import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
+import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.MessageChannel
@@ -47,5 +52,46 @@ fun send(channel: MessageChannel, msg: String) {
     catch (ex: PermissionException) { }
     catch (ex: Exception) {
         LOG.error("Failed to send message", ex)
+    }
+}
+
+fun AudioPlayerManager.loadItem(id: String, block: LoadHandlerBuilder.() -> Unit) {
+    val builder = LoadHandlerBuilder()
+    builder.block()
+    loadItem(id, builder.build())
+}
+
+class LoadHandlerBuilder {
+
+    var onFailure: (FriendlyException) -> Unit = { }
+    var onPlaylist: (AudioPlaylist) -> Unit = { }
+    var onTrack: (AudioTrack) -> Unit = { }
+    var onNoMatch: () -> Unit = { }
+
+    fun build() = object : AudioLoadResultHandler {
+        override fun loadFailed(exception: FriendlyException) = onFailure(exception)
+        override fun trackLoaded(track: AudioTrack) = onTrack(track)
+        override fun noMatches() = onNoMatch()
+        override fun playlistLoaded(playlist: AudioPlaylist) = onPlaylist(playlist)
+    }
+
+    infix fun onFailure(block: (FriendlyException) -> Unit): LoadHandlerBuilder {
+        onFailure = block
+        return this
+    }
+
+    infix fun onPlaylist(block: (AudioPlaylist) -> Unit): LoadHandlerBuilder {
+        onPlaylist = block
+        return this
+    }
+
+    infix fun onTrack(block: (AudioTrack) -> Unit): LoadHandlerBuilder {
+        onTrack = block
+        return this
+    }
+
+    infix fun onNoMatch(block: () -> Unit): LoadHandlerBuilder {
+        onNoMatch = block
+        return this
     }
 }

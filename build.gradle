@@ -24,7 +24,7 @@ repositories {
 dependencies {
     compile 'com.github.DV8FromTheWorld:JDA:b7f18e4a1d'
     compile 'com.github.JDA-Applications:Kotlin-JDA:master-SNAPSHOT'
-    compile 'com.sedmelluq:lavaplayer:1.2.36'
+    compile 'com.sedmelluq:lavaplayer:1.2.39'
     compile 'com.sedmelluq:jda-nas:1.0.3'
 
     compile 'org.jetbrains.kotlin:kotlin-stdlib-jre8:1.1.1'
