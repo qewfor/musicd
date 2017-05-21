@@ -34,9 +34,6 @@ dependencies {
     //compile 'org.fusesource.jansi:jansi:1.14'
 }
 
-configurations.all {
-    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
-}
 //task launch {
 //    doFirst { applicationDefaultJvmArgs = ["-Dbot.config=../config"] }
 //    doLast { run.exec() }

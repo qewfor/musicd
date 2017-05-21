@@ -18,12 +18,14 @@ package com.futuremangaming.futurebot.command
 
 import club.minnced.kjda.div
 import club.minnced.kjda.entities.sendEmbedAsync
+import club.minnced.kjda.entities.sendTextAsync
 import com.futuremangaming.futurebot.Assets
 import com.futuremangaming.futurebot.FutureBot
 import com.futuremangaming.futurebot.Permissions
 import com.futuremangaming.futurebot.internal.AbstractCommand
 import com.futuremangaming.futurebot.internal.Command
 import com.futuremangaming.futurebot.internal.CommandGroup
+import com.futuremangaming.futurebot.internal.ReadExecPrintLoop
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import org.apache.commons.lang3.StringUtils
@@ -33,7 +35,7 @@ import java.util.TreeMap
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 
-fun getAdmin() = setOf<Command>(Eval, Shutdown, Settings, Assettings)
+fun getAdmin() = setOf<Command>(Eval, Repl, Shutdown, Settings, Assettings)
 
 object Settings : AdminCommand("set") {
 
@@ -174,6 +176,21 @@ object Eval : AdminCommand("eval") {
     operator fun GuildMessageReceivedEvent.component4() = this.guild
     operator fun GuildMessageReceivedEvent.component5() = this.jda.selfUser
     operator fun GuildMessageReceivedEvent.component6() = this.message
+}
+
+object Repl : AdminCommand("repl") {
+
+    override fun onVerified(args: String, event: GuildMessageReceivedEvent, bot: FutureBot) {
+        val repl = newRepl(event, bot)
+        event.channel.sendTextAsync {
+            "Started new REPL session in this channel.\n" +
+            "To use commands surround your code with codeblocks.\n" +
+            "End the session by typing `exit` in your codeblock."
+        }
+    }
+
+    fun newRepl(event: GuildMessageReceivedEvent, bot: FutureBot)
+            = ReadExecPrintLoop(event.channel.idLong, event.author.idLong, event.jda, bot)
 }
 
 object Shutdown : AdminCommand("shutdown") {
