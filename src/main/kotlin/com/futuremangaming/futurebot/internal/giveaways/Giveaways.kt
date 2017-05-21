@@ -25,8 +25,8 @@ import net.dv8tion.jda.core.entities.TextChannel
 object Giveaways {
 
     private val MAP = TLongObjectHashMap<Giveaway>()
-    private val ENTER_EMOJI_KEY = "giveaway.enter"
-    private val CLOSE_EMOJI_KEY = "giveaway.close"
+    private const val ENTER_EMOJI_KEY = "giveaway.enter"
+    private const val CLOSE_EMOJI_KEY = "giveaway.close"
 
     val ENTER_EMOJI: String get() = System.getProperty(ENTER_EMOJI_KEY) ?: "📩"
     val CLOSE_EMOJI: String get() = System.getProperty(CLOSE_EMOJI_KEY) ?: "🔒"

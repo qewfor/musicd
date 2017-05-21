@@ -25,11 +25,10 @@ import net.dv8tion.jda.core.entities.Role
 
 object Permissions {
 
-    val ADMIN_ROLE_KEY = "role.admin"
-    val MOD_ROLE_KEY = "role.mod"
-    val SUB_ROLE_KEY = "role.sub"
-
-    val TWITCH_USER_KEY = "twitch.user"
+    const val ADMIN_ROLE_KEY = "role.admin"
+    const val MOD_ROLE_KEY = "role.mod"
+    const val SUB_ROLE_KEY = "role.sub"
+    const val TWITCH_USER_KEY = "twitch.user"
 
     val ADMIN_ROLE: String get() = System.getProperty(ADMIN_ROLE_KEY) ?: "-1"
     val MOD_ROLE: String get() = System.getProperty(MOD_ROLE_KEY) ?: "-1"
