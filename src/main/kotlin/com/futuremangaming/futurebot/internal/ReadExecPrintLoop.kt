@@ -45,6 +45,7 @@ class ReadExecPrintLoop(
                  Packages.net.dv8tion.jda.core,
                  Packages.net.dv8tion.jda.core.utils,
                  Packages.net.dv8tion.jda.core.entities,
+                 Packages.net.dv8tion.jda.core.requests,
                  Packages.net.dv8tion.jda.core.managers)
             function log(s) {
                 if (s == null)
