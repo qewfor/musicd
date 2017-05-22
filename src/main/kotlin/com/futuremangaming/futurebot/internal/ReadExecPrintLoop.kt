@@ -23,7 +23,6 @@ import net.dv8tion.jda.core.MessageBuilder
 import net.dv8tion.jda.core.events.Event
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.core.hooks.EventListener
-import org.apache.commons.lang3.exception.ExceptionUtils
 import java.io.Writer
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
@@ -98,7 +97,7 @@ class ReadExecPrintLoop(
                 ex.printStackTrace()
             else {
                 val writer = engine.context.errorWriter
-                writer.append(ExceptionUtils.getStackTrace(ex.cause))
+                writer.append(ex.cause.toString())
                 writer.flush()
             }
         }
