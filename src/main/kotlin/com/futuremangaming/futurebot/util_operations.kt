@@ -42,8 +42,8 @@ operator fun Short.not() = inv()
 operator fun Long.not() = inv()
 operator fun Byte.not() = inv()
 
-val mask0Regex = Regex("[\\[\\]]")
-val mask1Regex = Regex("[()]")
+val mask0Regex = Regex("[\\[\\]*]")
+val mask1Regex = Regex("[()*]")
 
 fun String.mask0() = replace(mask0Regex, "\\\\$0")
 fun String.mask1() = replace(mask1Regex, "\\\\$0")
