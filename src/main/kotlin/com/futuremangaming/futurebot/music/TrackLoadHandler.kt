@@ -25,6 +25,7 @@ import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
+import java.util.concurrent.TimeUnit.SECONDS
 
 class TrackLoadHandler(val trackRequest: TrackRequest) : AudioLoadResultHandler {
 
@@ -59,11 +60,22 @@ class TrackLoadHandler(val trackRequest: TrackRequest) : AudioLoadResultHandler 
             }
         }
 
-        val started: Boolean = remote.scheduler.enqueue(track)
-        channel.sendEmbedAsync {
-            color { Assets.MUSIC_EMBED_COLOR }
-            this += "${if (started) "Started playing " else "Loaded "}track **" +
-                "[${info.title.mask0()}](${info.uri.mask1()})** [Requested by ${member.asMention}]"
+        channel.sendTyping() then {
+            if (remote.scheduler.enqueue(track)) {
+                remote.display(channel).show()
+                channel.sendEmbedAsync {
+                    color { Assets.MUSIC_EMBED_COLOR }
+                    this += "Started playing track **[%s](%s)** [Requested by %s]"
+                            .format(info.title.mask0(), info.uri.mask1(), member)
+                } then {
+                    it?.delete()?.queueAfter(5, SECONDS)
+                }
+            }
+            else channel.sendEmbedAsync {
+                color { Assets.MUSIC_EMBED_COLOR }
+                this += "Loaded track **[%s](%s)** [Requested by %s]"
+                        .format(info.title.mask0(), info.uri.mask1(), member)
+            }
         }
     }
 

@@ -43,6 +43,7 @@ class Display(val channel: TextChannel, val remote: PlayerRemote) {
 
     fun destroy() {
         channel.jda.removeEventListener(listener)
+        channel.deleteMessageById(message.get()).queue(null) {}
     }
 
     fun shuffle(mem: Member) {
