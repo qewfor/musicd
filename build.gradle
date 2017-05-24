@@ -25,7 +25,9 @@ dependencies {
     compile 'com.github.DV8FromTheWorld:JDA:feature~audit-logs-SNAPSHOT'
     compile 'com.github.JDA-Applications:Kotlin-JDA:master-SNAPSHOT'
     compile 'com.sedmelluq:lavaplayer:1.2.39'
-    compile 'com.sedmelluq:jda-nas:1.0.3'
+    compile ('com.sedmelluq:jda-nas:1.0.3') {
+        exclude group: 'net.dv8tion'
+    }
 
     compile 'org.jetbrains.kotlin:kotlin-stdlib-jre8:1.1.1'
     compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.14'
