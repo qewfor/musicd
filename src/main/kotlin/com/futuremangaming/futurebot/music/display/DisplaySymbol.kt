@@ -18,6 +18,9 @@ package com.futuremangaming.futurebot.music.display
 
 // WHY NOT USE AN ENUM?? CONVERSION IS ANNOYING!!
 object DisplaySymbol {
+    const val PLAY_PAUSE  = "\u23EF"
+    const val PAUSE       = "\u23F8"
+    const val PLAY        = "\u25B6"
     const val NOTE        = "\uD83C\uDFA7"
     const val SKIP        = "\u23ed"
     const val SHUFFLE     = "\ud83d\udd00"

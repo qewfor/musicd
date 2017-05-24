@@ -56,6 +56,10 @@ class Display(val channel: TextChannel, val remote: PlayerRemote) {
             remote.skipTrack()
     }
 
+    fun togglePause() {
+        remote.isPaused = !remote.isPaused
+    }
+
     fun show() {
         val message = createMessage()
         channel.sendMessage(message).then(this::addReactions)
@@ -71,7 +75,7 @@ class Display(val channel: TextChannel, val remote: PlayerRemote) {
                 val info = trackInfo()
                 if (!(info?.isStream ?: false))
                     this += bar
-                if (info !== null)field {
+                if (info !== null) field {
                     name = "Volume"
                     value = "`${remote.player.volume}`/`150`"
                 } field {
@@ -92,6 +96,7 @@ class Display(val channel: TextChannel, val remote: PlayerRemote) {
         if (message == null) return
         this.message.set(message.idLong)
         message.addReaction(DisplaySymbol.REFRESH).queue()
+        message.addReaction(DisplaySymbol.PLAY_PAUSE).queue()
         message.addReaction(DisplaySymbol.SHUFFLE).queue()
         message.addReaction(DisplaySymbol.SKIP).queue()
         message.addReaction(DisplaySymbol.MUTED).queue()
@@ -107,16 +112,12 @@ class Display(val channel: TextChannel, val remote: PlayerRemote) {
         return buildString {
             this += "[`${timestamp(track.position)}`/`${timestamp(info.length)}`]"
 
-            val vol = player.volume
-
-            if (vol < 10)
-                this += DisplaySymbol.MUTED
-            else if (vol < 75)
-                this += DisplaySymbol.VOLUME_LOW
-            else if (vol < 150)
-                this += DisplaySymbol.VOLUME_DOWN //aka mid
+            if (remote.isPaused)
+                this += DisplaySymbol.PAUSE
             else
-                this += DisplaySymbol.VOLUME_UP //aka max
+                this += DisplaySymbol.PLAY
+
+            this += DisplaySymbol.NOTE
 
             val p1 = (track.position / info.length.toDouble()) // convert to double to get actual value
             val p2 = p1 * 10
@@ -129,7 +130,16 @@ class Display(val channel: TextChannel, val remote: PlayerRemote) {
                     this += DisplaySymbol.PLAY_BAR
             }
 
-            this += DisplaySymbol.NOTE
+            val vol = player.volume
+
+            if (vol < 10)
+                this += DisplaySymbol.MUTED
+            else if (vol < 75)
+                this += DisplaySymbol.VOLUME_LOW
+            else if (vol < 150)
+                this += DisplaySymbol.VOLUME_DOWN //aka mid
+            else
+                this += DisplaySymbol.VOLUME_UP //aka max
         }
     }
 

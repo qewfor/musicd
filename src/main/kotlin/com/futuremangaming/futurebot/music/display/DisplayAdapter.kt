@@ -43,6 +43,7 @@ class DisplayAdapter(val display: Display) : ListenerAdapter() {
         val player = display.remote.player
         val volume = player.volume
         when (reaction) {
+            DisplaySymbol.PLAY_PAUSE  -> display.togglePause()
             DisplaySymbol.SHUFFLE     -> display.shuffle(mem)
             DisplaySymbol.SKIP        -> display.skip(mem)
             DisplaySymbol.MUTED       -> player.volume = 0

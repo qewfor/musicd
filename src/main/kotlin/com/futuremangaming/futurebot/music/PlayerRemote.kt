@@ -50,7 +50,6 @@ class PlayerRemote internal constructor(
     val queue: Queue<AudioTrack> get() = scheduler.queue
     val remainingTime: Long get() {
         return queue
-                .asSequence()
                 .map { it.duration }
                 .sum()
     }
@@ -68,13 +67,13 @@ class PlayerRemote internal constructor(
         return scheduler.nextTrack(true)
     }
 
-    fun shuffle() = synchronized(scheduler.queue) {
+    fun shuffle() = synchronized(queue) {
         val tracks = queue.toMutableList()
         this.queue.clear()
 
         Collections.shuffle(tracks)
 
-        scheduler.queue += tracks
+        queue += tracks
     }
 
     fun display(channel: TextChannel) = displays.getOrPut(channel.idLong) {
