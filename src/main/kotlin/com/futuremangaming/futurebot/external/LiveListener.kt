@@ -25,10 +25,8 @@ import com.futuremangaming.futurebot.getLogger
 import com.mashape.unirest.http.Unirest
 import com.mashape.unirest.http.exceptions.UnirestException
 import net.dv8tion.jda.core.JDA
-import net.dv8tion.jda.core.entities.Game
+import net.dv8tion.jda.core.entities.*
 import net.dv8tion.jda.core.entities.Game.GameType.TWITCH
-import net.dv8tion.jda.core.entities.MessageEmbed
-import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.events.Event
 import net.dv8tion.jda.core.events.user.UserGameUpdateEvent
 import net.dv8tion.jda.core.hooks.EventListener
@@ -43,12 +41,12 @@ class LiveListener : EventListener {
 
     companion object {
 
-        val TWITCH_COLOR = 0x6441A4
-        val TWITCH_LIVE_KEY = "twitch.live"
-        val TWITCH_USER_KEY = "twitch.user"
-        val TWITCH_CHANNEL_KEY = "twitch.channel"
-        val BOT_GUILD_KEY = "bot.guild"
-        val CHANNEL_LIVE_KEY = "channel.live"
+        const val TWITCH_COLOR = 0x6441A4
+        const val TWITCH_LIVE_KEY = "twitch.live"
+        const val TWITCH_USER_KEY = "twitch.user"
+        const val TWITCH_CHANNEL_KEY = "twitch.channel"
+        const val BOT_GUILD_KEY = "bot.guild"
+        const val CHANNEL_LIVE_KEY = "channel.live"
         val LOG = getLogger("Twitch")
 
         val CHANNEL: String get() = System.getProperty(CHANNEL_LIVE_KEY, "-1")
@@ -61,6 +59,8 @@ class LiveListener : EventListener {
     var api: JDA? = null
     val lock = Any()
     var queryFailures: Int = 0
+
+    val guild: Guild? get() = api?.getGuildById(GUILD)
 
     override fun onEvent(event: Event) {
         api = event.jda
@@ -89,7 +89,7 @@ class LiveListener : EventListener {
             }
         }
         else if (stream !== null){
-            val guild = api?.getGuildById(GUILD)
+            val guild = guild
             val game = guild?.getMemberById(USER)?.game
             if (api?.presence?.game === null && game !== null && game.type === TWITCH)
                 api?.presence?.game = game
@@ -119,13 +119,27 @@ class LiveListener : EventListener {
     fun queryTwitch(): Unit = synchronized(lock) {
         try {
             val stream = stream()
-            val embed = createEmbed(stream)
+
+            val embed = createEmbed(stream, guild.randomEmote()?.asMention)
 
             onStream(embed, isQuery = true)
         }
         catch (ex: UnirestException) {
             LOG.debug("Connection Failure", ex)
         }
+    }
+
+    fun Guild?.randomEmote(): Emote? {
+        val self = this?.selfMember
+        val list = this?.emotes?.filterNotNull()
+                    ?.filter { self?.canInteract(it) ?: false }
+                    ?.toList()
+        if (list !== null)
+        {
+            val index = ((Math.random() * list.size * 3) % list.size).toInt()
+            return list[index]
+        }
+        return null
     }
 
     fun stream(): Map<String, Any?>? {
@@ -144,7 +158,7 @@ class LiveListener : EventListener {
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun createEmbed(map: Map<String, Any?>?): MessageEmbed? {
+    fun createEmbed(map: Map<String, Any?>?, emote: String?): MessageEmbed? {
         if (map === null) return null
         val stream   = map["stream"]     as? Map<String, Any> ?: return null
         val channel  = stream["channel"] as? Map<String, Any> ?: throw IllegalArgumentException("Channel is null")
@@ -165,7 +179,12 @@ class LiveListener : EventListener {
             if (twitchUrl !== null)
                 url { twitchUrl }
 
-            description { "<:fmgSUP:219939370575069194> $status" }
+            description {
+                if (emote !== null)
+                    "$emote $status"
+                else
+                    "$status"
+            }
 
             author {
                 value = "FuturemanGaming"

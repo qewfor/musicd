@@ -45,6 +45,7 @@ class TrackLoadHandler(val trackRequest: TrackRequest) : AudioLoadResultHandler 
         if (track === null) return
         val (remote, id, member, channel, message) = trackRequest
         message.delete("Track(s) loaded for %#s", member.user)
+        track.userData = member.user.idLong
         val info = track.info
         if (info.isStream) {
             if (!allowLive) {
@@ -95,8 +96,10 @@ class TrackLoadHandler(val trackRequest: TrackRequest) : AudioLoadResultHandler 
         message.delete("Loaded Playlist for %#s", member.user)
         channel.sendTyping() then {
 
-            for (track in playlist.tracks)
+            for (track in playlist.tracks) {
+                track.userData = member.user.idLong
                 remote.scheduler.enqueue(track)
+            }
 
             send(channel, "Loaded playlist with **${playlist.tracks?.size}** tracks! [Requested by ${member.asMention}]")
 
