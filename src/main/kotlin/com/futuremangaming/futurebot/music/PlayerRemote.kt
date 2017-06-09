@@ -76,6 +76,12 @@ class PlayerRemote internal constructor(
         queue += tracks
     }
 
+    inline fun ifDisplayPresent(channel: TextChannel, block: Display.() -> Unit) {
+        val display = displays[channel.idLong]
+        if (display !== null)
+            display.block()
+    }
+
     fun display(channel: TextChannel) = displays.getOrPut(channel.idLong) {
         LOG.debug("Created new Display (!playing) in #{}.", channel.name)
         return@getOrPut Display(channel, this)

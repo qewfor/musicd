@@ -17,6 +17,7 @@
 package com.futuremangaming.futurebot.music
 
 import club.minnced.kjda.entities.sendEmbedAsync
+import club.minnced.kjda.entities.sendTextAsync
 import club.minnced.kjda.then
 import com.futuremangaming.futurebot.Assets
 import com.futuremangaming.futurebot.mask0
@@ -101,7 +102,13 @@ class TrackLoadHandler(val trackRequest: TrackRequest) : AudioLoadResultHandler 
                 remote.scheduler.enqueue(track)
             }
 
-            send(channel, "Loaded playlist with **${playlist.tracks?.size}** tracks! [Requested by ${member.asMention}]")
+            channel.sendTextAsync {
+                "Loaded playlist with **${playlist.tracks?.size}** tracks! [Requested by ${member.asMention}]"
+            } then {
+                val display = remote.displays[channel.idLong]
+                if (display === null)
+                    remote.display(channel).show()
+            }
 
         }
     }

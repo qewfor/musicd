@@ -23,8 +23,6 @@ import club.minnced.kjda.then
 import com.futuremangaming.futurebot.Assets
 import com.futuremangaming.futurebot.Permissions
 import com.futuremangaming.futurebot.command.timestamp
-import com.futuremangaming.futurebot.mask0
-import com.futuremangaming.futurebot.mask1
 import com.futuremangaming.futurebot.music.PlayerRemote
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo
 import net.dv8tion.jda.core.entities.Member
@@ -73,17 +71,15 @@ class Display(val channel: TextChannel, val remote: PlayerRemote) {
             embed {
                 color { Assets.MUSIC_EMBED_COLOR }
                 val info = trackInfo()
-                if (!(info?.isStream ?: false))
-                    this += bar
                 if (info !== null) {
+                    title = "%.40s".format(info.title)
+                    url = info.uri
                     field {
-                        inline = false
-                        name = "Currently Playing"
-                        value = "**[%.30s](%s)**".format(info.title?.mask0() ?: "T/A", info.uri?.mask1())
+                        value = bar + "\n**Volume**: `%d`/`150`".format(remote.player.volume)
                     }
-                    footer {
-                        value = "Volume [%d/150]".format(remote.player.volume)
-                    }
+                }
+                else {
+                    this += "Nothing to display!"
                 }
             }
         }

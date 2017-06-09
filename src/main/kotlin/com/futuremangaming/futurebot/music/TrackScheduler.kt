@@ -30,7 +30,11 @@ import net.dv8tion.jda.core.entities.VoiceChannel
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 
-class TrackScheduler(val player: AudioPlayer, val guild: Guild, val manager: MusicManager) : AudioEventAdapter() {
+class TrackScheduler(
+    val player: AudioPlayer,
+    val guild: Guild,
+    val manager: MusicManager,
+    val module: MusicModule) : AudioEventAdapter() {
 
     internal val queue: BlockingQueue<AudioTrack> = LinkedBlockingQueue()
     internal var voice: VoiceChannel? = null
@@ -68,6 +72,11 @@ class TrackScheduler(val player: AudioPlayer, val guild: Guild, val manager: Mus
     override fun onTrackStart(player: AudioPlayer?, track: AudioTrack?) {
         if (voice !== null && !guild.audioManager.isConnected)
             guild.audioManager.openAudioConnection(voice)
+        module.remote(guild).displays.forEach { _, display ->
+            val id = display.message.get()
+            if (id != 0L)
+                display.channel.editMessageById(id, display.createMessage()).queue()
+        }
     }
 
     override fun onTrackEnd(player: AudioPlayer?, track: AudioTrack?, endReason: AudioTrackEndReason) {

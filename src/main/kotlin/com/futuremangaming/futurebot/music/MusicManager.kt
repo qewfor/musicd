@@ -21,7 +21,7 @@ import gnu.trove.TDecorators
 import gnu.trove.map.hash.TLongObjectHashMap
 import net.dv8tion.jda.core.entities.Guild
 
-class MusicManager {
+class MusicManager(val module: MusicModule) {
 
     private val players: MutableMap<Long, AudioPlayer> = TDecorators.wrap(TLongObjectHashMap<AudioPlayer>())
     private val schedulers: MutableMap<AudioPlayer, TrackScheduler> = hashMapOf()
@@ -34,7 +34,9 @@ class MusicManager {
 
     fun getPlayer(guild: Guild) = players.getOrPut(guild.idLong) {
         val player = MusicModule.PLAYER_MANAGER.createPlayer()
-        val scheduler = schedulers.getOrPut(player) { TrackScheduler(player, guild, this@MusicManager) }
+        val scheduler = schedulers.getOrPut(player) {
+            TrackScheduler(player, guild, this@MusicManager, module)
+        }
 
         guild.audioManager.sendingHandler = PlayerSendHandler(player)
         player.addListener(scheduler)

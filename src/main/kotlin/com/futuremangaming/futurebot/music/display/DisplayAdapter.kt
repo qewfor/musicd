@@ -45,25 +45,23 @@ class DisplayAdapter(val display: Display) : ListenerAdapter() {
         when (reaction) {
             DisplaySymbol.PLAY_PAUSE  -> display.togglePause()
             DisplaySymbol.SHUFFLE     -> display.shuffle(mem)
-            DisplaySymbol.SKIP        -> display.skip(mem)
             DisplaySymbol.MUTED       -> player.volume = 0
             DisplaySymbol.VOLUME_DOWN -> decVolume(player, volume)
             DisplaySymbol.VOLUME_UP   -> incVolume(player, volume)
             DisplaySymbol.REFRESH     -> nop()
+            DisplaySymbol.SKIP        -> return display.skip(mem) // return since updated by scheduler
             else                      -> return
         }
         // On every successful interaction update the display
         display.channel.editMessageById(messageId, display.createMessage()).queue()
     }
 
-    fun incVolume(player: AudioPlayer, vol: Int)
-    {
+    fun incVolume(player: AudioPlayer, vol: Int) {
         if (vol <= 140)
             player.volume += 10
     }
 
-    fun decVolume(player: AudioPlayer, vol: Int)
-    {
+    fun decVolume(player: AudioPlayer, vol: Int) {
         if (vol >= 10)
             player.volume -= 10
     }

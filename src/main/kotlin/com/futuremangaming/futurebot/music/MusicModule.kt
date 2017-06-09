@@ -35,7 +35,7 @@ class MusicModule {
 
     }
 
-    val manager: MusicManager = MusicManager()
+    val manager: MusicManager = MusicManager(this)
     val remotes = TLongObjectHashMap<PlayerRemote>()
 
     fun remote(guild: Guild): PlayerRemote = if (remotes.containsKey(guild.idLong)) {
