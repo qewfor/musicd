@@ -82,7 +82,7 @@ class Display(val channel: TextChannel, val remote: PlayerRemote) {
                         value = "**[%.30s](%s)**".format(info.title?.mask0() ?: "T/A", info.uri?.mask1())
                     }
                     footer {
-                        value = "Volume: `%d`/`150`".format(remote.player.volume)
+                        value = "Volume [%d/150]".format(remote.player.volume)
                     }
                 }
             }
