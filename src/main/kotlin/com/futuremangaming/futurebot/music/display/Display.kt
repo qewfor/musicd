@@ -75,12 +75,15 @@ class Display(val channel: TextChannel, val remote: PlayerRemote) {
                 val info = trackInfo()
                 if (!(info?.isStream ?: false))
                     this += bar
-                if (info !== null) field {
-                    name = "Volume"
-                    value = "`${remote.player.volume}`/`150`"
-                } field {
-                    name = "Currently Playing"
-                    value = "**[%.30s](%s)**".format(info.title?.mask0() ?: "T/A", info.uri?.mask1())
+                if (info !== null) {
+                    field {
+                        inline = false
+                        name = "Currently Playing"
+                        value = "**[%.30s](%s)**".format(info.title?.mask0() ?: "T/A", info.uri?.mask1())
+                    }
+                    footer {
+                        value = "Volume: `%d`/`150`".format(remote.player.volume)
+                    }
                 }
             }
         }

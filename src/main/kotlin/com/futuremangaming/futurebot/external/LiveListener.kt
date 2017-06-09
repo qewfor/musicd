@@ -134,8 +134,7 @@ class LiveListener : EventListener {
         val list = this?.emotes?.filterNotNull()
                     ?.filter { self?.canInteract(it) ?: false }
                     ?.toList()
-        if (list !== null && list.isNotEmpty())
-        {
+        if (list !== null && list.isNotEmpty()) {
             val index = ((Math.random() * list.size * 3) % list.size).toInt()
             return list[index]
         }
